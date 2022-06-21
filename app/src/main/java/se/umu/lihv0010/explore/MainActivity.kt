@@ -6,12 +6,7 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
-import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.MotionEvent
-import android.view.View
-import android.widget.LinearLayout
-import android.widget.PopupWindow
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.preference.PreferenceManager
@@ -21,13 +16,17 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import org.osmdroid.api.IMapController
+import org.osmdroid.bonuspack.kml.KmlDocument
+import org.osmdroid.bonuspack.kml.Style
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
+import java.io.IOException
 
 
 // TODO: Following tutorial https://www.geeksforgeeks.org/how-to-get-current-location-in-android/
@@ -55,6 +54,9 @@ class MainActivity : AppCompatActivity() {
 
 
     // TODO: Center map button to set userCentered = true
+
+    // TODO: Implement https://github.com/MKergall/osmbonuspack
+
     // TODO: Placing markers functionability
     // TODO: Fog of war
     // TODO: Get popular landmarks from OSM
@@ -76,7 +78,8 @@ class MainActivity : AppCompatActivity() {
         map = findViewById(R.id.mapview)
         initialMapControls()
         initLocationListener()
-        createMarker()
+        createLocationMarker()
+        loadFogOfWar()
         setupListener()
     }
 
@@ -89,7 +92,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun longPressHelper(p: GeoPoint): Boolean {
                 println("longPressHelper")
-                popupMenu()
+                //placeMarker(p) // TODO
                 return false
             }
         }
@@ -97,27 +100,33 @@ class MainActivity : AppCompatActivity() {
         map.overlays.add(overlayEvents)
     }
 
-    private fun popupMenu() {
-        val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val popupView: View = inflater.inflate(R.menu.popup_menu, null)
-        // TODO: Does not take menu, wants layout instead
-        // https://stackoverflow.com/questions/5944987/how-to-create-a-popup-window-popupwindow-in-android
 
-        val width = LinearLayout.LayoutParams.WRAP_CONTENT
-        val height = LinearLayout.LayoutParams.WRAP_CONTENT
-        val focusable = true // lets taps outside the popup also dismiss it
-        val popupWindow = PopupWindow(popupView, width, height, focusable)
+    private fun loadFogOfWar() {
+        try {
+            val kmlDocument = KmlDocument()
+            var file = assets.open("geodata.json").bufferedReader().use { it.readText() }
+            kmlDocument.parseGeoJSON(file)
 
-        popupWindow.showAtLocation(map, Gravity.NO_GRAVITY, xCoordinate.toInt(), yCoordinate.toInt())
+            val newstyle = Style(null, -0xFA0000, 10.0f, -0xFA0000) // Sets fog of war color
+            val kmlOverlay = kmlDocument.mKmlRoot.buildOverlay(map, newstyle, null, kmlDocument) as FolderOverlay
 
-        // TODO: Listen to click and setup calls for the menu buttons
+            map.overlays.add(kmlOverlay);
+            map.invalidate();
+
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
     }
 
-    private fun placeMarker() {
-        TODO("Not yet implemented")
+    private fun placeMarker(p: GeoPoint) {
+        var newMarker = Marker(map)
+        newMarker.position = p
+        //newMarker.icon =
+        map.overlays.add(newMarker)
+        map.invalidate()
     }
 
-    private fun createMarker() {
+    private fun createLocationMarker() {
         centerDot = Marker(map)
         centerDot.position = latestLocation
         centerDot.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)

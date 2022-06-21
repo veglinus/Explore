@@ -2,11 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/action_1"
-        android:title="Set marker"
+        android:id="@+id/action_crick"
+        android:title="Place 1km node"
         app:showAsAction="never"/>
     <item
-        android:id="@+id/action_2"
+        android:id="@+id/action_ftbal"
+        android:title="Place 3km node"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/action_hockey"
         android:title="Cancel"
         app:showAsAction="never"/>
 </menu>
