@@ -3,9 +3,11 @@ package se.umu.lihv0010.explore
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
+import android.os.PersistableBundle
 import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -17,17 +19,17 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import org.osmdroid.api.IMapController
 import org.osmdroid.bonuspack.kml.KmlDocument
-import org.osmdroid.bonuspack.kml.Style
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.util.GeometryMath
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
-import java.io.IOException
-
+import org.osmdroid.views.overlay.Overlay
+import org.osmdroid.views.overlay.Polygon
 
 // TODO: Following tutorial https://www.geeksforgeeks.org/how-to-get-current-location-in-android/
 
@@ -62,6 +64,15 @@ class MainActivity : AppCompatActivity() {
     // TODO: Get popular landmarks from OSM
 
     private lateinit var centerDot: Marker
+    private var earthCover = Polygon()
+    private var uncoveredFog: ArrayList<GeoPoint> = arrayListOf(
+
+        GeoPoint(57.8916513235776, 11.965484619140625),
+        GeoPoint(57.8916513235776, 11.96860671043396),
+        GeoPoint(57.89314537700935, 11.96860671043396),
+        GeoPoint(57.89314537700935, 11.965484619140625),
+        GeoPoint(57.8916513235776, 11.965484619140625)
+    )
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         xCoordinate = ev.x
@@ -76,6 +87,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         map = findViewById(R.id.mapview)
+        map.setMultiTouchControls(true);
+
+
         initialMapControls()
         initLocationListener()
         createLocationMarker()
@@ -87,6 +101,15 @@ class MainActivity : AppCompatActivity() {
         val mReceive: MapEventsReceiver = object : MapEventsReceiver {
             override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
                 println("SingleTapConfirmedHelper")
+
+                val circle = Polygon(map)
+                circle.points = Polygon.pointsAsCircle(p, 5000.0)
+                circle.fillColor = (Color.TRANSPARENT)
+                circle.setStrokeColor(Color.RED)
+                map.overlays.add(circle)
+                map.invalidate()
+
+
                 return false
             }
 
@@ -100,22 +123,86 @@ class MainActivity : AppCompatActivity() {
         map.overlays.add(overlayEvents)
     }
 
-
     private fun loadFogOfWar() {
-        try {
-            val kmlDocument = KmlDocument()
-            var file = assets.open("geodata.json").bufferedReader().use { it.readText() }
-            kmlDocument.parseGeoJSON(file)
+        val geoPoints: MutableList<GeoPoint> = arrayListOf(
+            GeoPoint(53.225768435790194, -0.087890625),
+            GeoPoint(53.225768435790194,36.9140625),
+            GeoPoint(71.49703690095419,36.9140625),
+            GeoPoint(71.49703690095419,-0.087890625),
+            GeoPoint(53.225768435790194, -0.087890625)
+        )
+        earthCover.fillColor = (-0xFA0000) // Black color fog, TODO: Animate?
+        earthCover.points = geoPoints
 
-            val newstyle = Style(null, -0xFA0000, 10.0f, -0xFA0000) // Sets fog of war color
-            val kmlOverlay = kmlDocument.mKmlRoot.buildOverlay(map, newstyle, null, kmlDocument) as FolderOverlay
+        val holes: MutableList<List<GeoPoint>> = ArrayList()
+        //holes.add(uncoveredFog)
 
-            map.overlays.add(kmlOverlay);
-            map.invalidate();
+        // https://github.com/MKergall/osmbonuspack/wiki/Tutorial_1
 
-        } catch (e: IOException) {
-            e.printStackTrace()
+        /*
+        val aroundMe = Polygon()
+        aroundMe.points = Polygon.pointsAsCircle(latestLocation, 200.0)
+        holes.add(aroundMe.points)
+        */
+        holes.add(uncoveredFog)
+
+        earthCover.holes = holes
+        map.overlayManager.add(earthCover)
+        map.invalidate()
+    }
+
+    private fun removeFog(location: GeoPoint) {
+        println("Removing fog from new area")
+
+        val newPolygon = Polygon()
+        //newPolygon.points = Polygon.pointsAsCircle(location, 100.0)
+
+        newPolygon.points = Polygon.pointsAsRect(location, 200.0, 200.0) as MutableList<GeoPoint>
+
+        // Merge de-fogged area with new polygon by:
+        // Check which points inside of newPolygon are INSIDE of uncoveredFog
+
+
+
+        // If the point exists, remove it
+
+        var newBox = BoundingBox.fromGeoPoints(uncoveredFog)
+
+
+
+
+
+        for (point in newPolygon.points) {
+            if (newBox.contains(point)) {
+
+            } else {
+                uncoveredFog.add(point)
+            }
         }
+
+
+
+
+
+
+
+        val holes: MutableList<List<GeoPoint>> = ArrayList()
+        holes.add(uncoveredFog)
+        earthCover.holes = holes
+
+        println(uncoveredFog)
+
+
+
+            // https://en.wikipedia.org/wiki/Convex_hull_algorithms
+
+
+        // Keep new de-fogged area in memory and show it
+        // Then save it to file before user closes application
+
+
+
+        map.invalidate()
     }
 
     private fun placeMarker(p: GeoPoint) {
@@ -137,7 +224,7 @@ class MainActivity : AppCompatActivity() {
     private fun initialMapControls() {
         map.setTileSource(TileSourceFactory.MAPNIK)
         mapController = map.controller
-        mapController.setZoom(18.0)
+        mapController.setZoom(18.0) // Should be 18
     }
 
     private fun initLocationListener() {
@@ -157,6 +244,9 @@ class MainActivity : AppCompatActivity() {
                                 setLocation(newLocation)
 
                                 centerDot.position = latestLocation
+
+                                removeFog(newLocation)
+
                             } else {
                                 //println("Location is same as last check")
                             }

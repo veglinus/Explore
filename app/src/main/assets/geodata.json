@@ -3,6 +3,7 @@
   "features": [
     {
       "type": "Feature",
+      "id": "my_id",
       "properties": {},
       "geometry": {
         "type": "Polygon",
