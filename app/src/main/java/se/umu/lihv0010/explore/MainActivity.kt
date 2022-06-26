@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
-import android.os.PersistableBundle
 import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -18,18 +17,16 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import org.osmdroid.api.IMapController
-import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
-import org.osmdroid.util.GeometryMath
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.Overlay
 import org.osmdroid.views.overlay.Polygon
+import org.osmdroid.views.overlay.Polyline
 
 // TODO: Following tutorial https://www.geeksforgeeks.org/how-to-get-current-location-in-android/
 
@@ -65,14 +62,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var centerDot: Marker
     private var earthCover = Polygon()
-    private var uncoveredFog: ArrayList<GeoPoint> = arrayListOf(
-
-        GeoPoint(57.8916513235776, 11.965484619140625),
-        GeoPoint(57.8916513235776, 11.96860671043396),
-        GeoPoint(57.89314537700935, 11.96860671043396),
-        GeoPoint(57.89314537700935, 11.965484619140625),
-        GeoPoint(57.8916513235776, 11.965484619140625)
-    )
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         xCoordinate = ev.x
@@ -87,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         map = findViewById(R.id.mapview)
-        map.setMultiTouchControls(true);
+        map.setMultiTouchControls(true)
 
 
         initialMapControls()
@@ -134,75 +123,64 @@ class MainActivity : AppCompatActivity() {
         earthCover.fillColor = (-0xFA0000) // Black color fog, TODO: Animate?
         earthCover.points = geoPoints
 
-        val holes: MutableList<List<GeoPoint>> = ArrayList()
-        //holes.add(uncoveredFog)
-
-        // https://github.com/MKergall/osmbonuspack/wiki/Tutorial_1
-
         /*
-        val aroundMe = Polygon()
-        aroundMe.points = Polygon.pointsAsCircle(latestLocation, 200.0)
-        holes.add(aroundMe.points)
-        */
+        val holes: MutableList<List<GeoPoint>> = ArrayList()
         holes.add(uncoveredFog)
-
         earthCover.holes = holes
         map.overlayManager.add(earthCover)
         map.invalidate()
+         */
     }
+
+    private var locationsVisited: MutableList<GeoPoint> = mutableListOf()
 
     private fun removeFog(location: GeoPoint) {
         println("Removing fog from new area")
 
-        val newPolygon = Polygon()
-        //newPolygon.points = Polygon.pointsAsCircle(location, 100.0)
+        /*
+        val oldBox = BoundingBox.fromGeoPoints(uncoveredFog)
+        for (newPoint in polygon.points) {
+            if (oldBox.contains(newPoint)) {
 
-        newPolygon.points = Polygon.pointsAsRect(location, 200.0, 200.0) as MutableList<GeoPoint>
-
-        // Merge de-fogged area with new polygon by:
-        // Check which points inside of newPolygon are INSIDE of uncoveredFog
-
+                val newBox = BoundingBox.fromGeoPoints(polygon.actualPoints)
 
 
-        // If the point exists, remove it
+                for ((index, oldPoint) in uncoveredFog.withIndex()) {
+                    if (newBox.contains(oldPoint)) {
+                        println("New box contains old point in it")
 
-        var newBox = BoundingBox.fromGeoPoints(uncoveredFog)
+                        val newList = uncoveredFog.toMutableList()
+                        newList.remove(oldPoint)
+                        uncoveredFog = newList as ArrayList<GeoPoint>
+                    }
+                }
 
-
-
-
-
-        for (point in newPolygon.points) {
-            if (newBox.contains(point)) {
 
             } else {
-                uncoveredFog.add(point)
+                uncoveredFog.add(newPoint)
             }
-        }
+        }*/
 
+        /* POLYLINE
+        locationsVisited.add(location)
+        var line = Polyline()
+        line.setPoints(locationsVisited)
+        map.overlays.add(line)
+        */
 
-
-
-
+        /*
+        val polygon = Polygon() //see note below
+        var geoPoints = Polygon.pointsAsRect(location, 200.0, 200.0) as MutableList<GeoPoint>
+        polygon.fillColor = Color.argb(0, 255, 0, 0)
+        polygon.strokeColor = Color.argb(0, 0, 0, 0)
+        geoPoints.add(geoPoints[0]) //forces the loop to close
+        polygon.points = geoPoints
 
 
         val holes: MutableList<List<GeoPoint>> = ArrayList()
-        holes.add(uncoveredFog)
+        holes.add(geoPoints)
         earthCover.holes = holes
-
-        println(uncoveredFog)
-
-
-
-            // https://en.wikipedia.org/wiki/Convex_hull_algorithms
-
-
-        // Keep new de-fogged area in memory and show it
-        // Then save it to file before user closes application
-
-
-
-        map.invalidate()
+         */
     }
 
     private fun placeMarker(p: GeoPoint) {
@@ -247,8 +225,6 @@ class MainActivity : AppCompatActivity() {
 
                                 removeFog(newLocation)
 
-                            } else {
-                                //println("Location is same as last check")
                             }
                         }
 
@@ -261,7 +237,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun setLocation(newLocation: GeoPoint) {
         latestLocation = newLocation
-        //mapController.setCenter(newLocation)
         if (userCentered) {
             mapController.animateTo(newLocation)
         }
