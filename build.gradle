@@ -9,3 +9,12 @@ plugins {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+allprojects {
+    // forces all changing dependencies (i.e. SNAPSHOTs) to automagicially download
+    configurations.all {
+        resolutionStrategy {
+            cacheChangingModulesFor 0, 'seconds'
+        }
+    }
+}
