@@ -49,9 +49,11 @@ class LocationServices(inputMap: MapView, gameInput: Game) {
                         val result = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
                         if (result != null) {
                             val newLocation = GeoPoint(result.latitude, result.longitude)
-                            if (newLocation != game.latestLocation) {
-                                game.latestLocation = newLocation
-                                game.checkIfGoalReached(newLocation);
+                            if (newLocation != latestLocation) {
+                                latestLocation = newLocation
+                                game.checkIfGoalReached(newLocation)
+
+                                Log.d(tag, latestLocation.toString())
                             }
                         }
 
@@ -93,5 +95,9 @@ class LocationServices(inputMap: MapView, gameInput: Game) {
         } else {
             true
         }
+    }
+
+    companion object {
+        var latestLocation: GeoPoint = GeoPoint(57.86973548791104, 11.974444448918751)
     }
 }

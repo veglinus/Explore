@@ -8,6 +8,8 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.preference.PreferenceManager
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.events.MapEventsReceiver
@@ -16,6 +18,9 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import se.umu.lihv0010.explore.databinding.ActivityMainBinding
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.properties.Delegates
 
 class MainActivity : AppCompatActivity() {
     private lateinit var map : MapView
@@ -50,7 +55,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupMapAndGameLogic()
-        setupMapTouchListeners()
+        //setupMapTouchListeners()
         setupUI()
     }
 
@@ -59,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         map = binding.mapview
         map.setMultiTouchControls(true)
         map.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
-        map.controller.setZoom(18.0) // Should be 18
+        map.controller.setZoom(18.0) // 18 should be standard
 
         game = Game(map)
         locationServices = LocationServices(map, game)
@@ -84,12 +89,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupUI() {
         binding.testButton.setOnClickListener {
+            // TODO: Selector for distance
             game.spawnGoal(500.0)
         }
+
         binding.centerButton.setOnClickListener {
             locationServices.myLocationOverlay.enableFollowLocation()
             binding.centerButton.visibility = View.GONE
         }
+
+        game.points.observe(this, Observer {
+            binding.points.text = it.toString()
+        })
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
