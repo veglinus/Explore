@@ -15,19 +15,26 @@ class Game(inputMap: MapView) {
     private val tag = "DebugExploreGameClass"
     private val map = inputMap
 
-    // TODO: These two values need to be saved and restored
+    // TODO: These three values need to be saved and restored
     var homeLocation = GeoPoint(57.86973548791104, 11.974444448918751)
     var points: MutableLiveData<Int> = MutableLiveData(0)
+    private var goalExists: Boolean = false
+
     private var goals: MutableList<GeoPoint> = mutableListOf() // List of current goals
     private var visitedGoals: MutableList<GeoPoint> = mutableListOf() // Delete each day
     private val goalGenerator = GoalGenerator(map)
 
     fun spawnGoal(distanceAway: Double) {
-        println("Spawning goal!")
-        val newGoal = goalGenerator.new(distanceAway)
-        goals.add(newGoal.position)
-        map.overlays.add(newGoal)
-        map.invalidate()
+        if (!goalExists) {
+            println("Spawning goal!")
+            val newGoal = goalGenerator.new(distanceAway)
+            goals.add(newGoal.position)
+            map.overlays.add(newGoal)
+            map.invalidate()
+            goalExists = true
+        } else {
+         Log.d(tag, "Goal already exists.")
+        }
     }
 
     fun checkIfGoalReached(location: GeoPoint) {

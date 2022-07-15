@@ -1,14 +1,18 @@
 package se.umu.lihv0010.explore
 
+import android.R
+import android.graphics.drawable.Drawable
 import android.util.Log
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.bonuspack.routing.RoadManager
+import org.osmdroid.bonuspack.routing.RoadNode
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import se.umu.lihv0010.explore.LocationServices.Companion.latestLocation
 import kotlin.random.Random
+
 
 class GoalGenerator(mapInput: MapView) {
     private val tag = "DebugExploreGoalGenerator"
@@ -28,10 +32,10 @@ class GoalGenerator(mapInput: MapView) {
         }*/
 
         val randomPoint = latestLocation.destinationPoint(distanceAway, randomDirection())
-        newGoal.position = getClosestRoadAndPath(randomPoint) // TODO: Find the 500m line on this path and pick that instead of full path
+        newGoal.position = getClosestRoadAndPath(randomPoint, distanceAway) // TODO: Find the 500m line on this path and pick that instead of full path
 
 
-
+        // TODO: Add distance and points
 
         return newGoal
     }
@@ -59,7 +63,7 @@ class GoalGenerator(mapInput: MapView) {
         return newDirection
     }
 
-    private fun getClosestRoadAndPath(newGoal: GeoPoint): GeoPoint {
+    private fun getClosestRoadAndPath(newGoal: GeoPoint, selectedDistance: Double): GeoPoint {
         // Creates path from start to finish
         val roadManager: RoadManager = OSRMRoadManager(map.context, "ExploreApp/1.0")
         (roadManager as OSRMRoadManager).setMean(OSRMRoadManager.MEAN_BY_FOOT)
@@ -67,8 +71,26 @@ class GoalGenerator(mapInput: MapView) {
         val path = roadManager.getRoad(waypoints)
         val pathOverlay: Polyline = RoadManager.buildRoadOverlay(path)
 
-        map.overlays.add(pathOverlay)
+        //Log.d(tag, pathOverlay.actualPoints.toString())
 
+        //Log.d(tag, "Polyline size: " + pathOverlay.actualPoints.size)
+
+        var distance: Double = 0.0
+        val duplicateList = pathOverlay.actualPoints.toMutableList()
+        for ((index, point) in duplicateList.withIndex()) { // Populates distance variable
+            if (index < duplicateList.size - 1) {
+                distance += point.distanceToAsDouble(duplicateList[index + 1])
+            }
+            if (distance > selectedDistance) { // Removes rest of path if we dont need path to be longer
+                pathOverlay.actualPoints.remove(point)
+            }
+        }
+
+        //Log.d(tag, "Distance: $distance")
+        pathOverlay.usePath(true) // Uncomment to see first generated path which is as long as the distance variable
+
+        map.overlays.add(pathOverlay)
+        // TODO: Zoom to new goal
         map.zoomToBoundingBox(pathOverlay.bounds, true)
         return pathOverlay.actualPoints.last() // Returns our new point, on a reachable road
     }

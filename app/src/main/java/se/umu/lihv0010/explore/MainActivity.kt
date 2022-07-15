@@ -30,12 +30,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var game: Game
     private lateinit var locationServices: LocationServices
 
-    // TODO: Zoom to new goal, show the description and points on it
     // TODO: Cancel button for goal (maybe allow user to finish x meters away for less points)
+    // TODO: Background activity
 
     // TODO: Achievements
     // TODO: Custom icons for player and goal
     // TODO: Listen to WatchOS Heartrate sensor?
+
+    // TODO: Battery saver mode like in POGO
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         locationServices.myLocationOverlay.disableFollowLocation() // Stops following center marker

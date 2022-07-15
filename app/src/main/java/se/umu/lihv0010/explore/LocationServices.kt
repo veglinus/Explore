@@ -52,8 +52,7 @@ class LocationServices(inputMap: MapView, gameInput: Game) {
                             if (newLocation != latestLocation) {
                                 latestLocation = newLocation
                                 game.checkIfGoalReached(newLocation)
-
-                                Log.d(tag, latestLocation.toString())
+                                //Log.d(tag, latestLocation.toString())
                             }
                         }
 
