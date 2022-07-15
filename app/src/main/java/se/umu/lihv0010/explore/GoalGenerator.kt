@@ -3,6 +3,8 @@ package se.umu.lihv0010.explore
 import android.R
 import android.graphics.drawable.Drawable
 import android.util.Log
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.bonuspack.routing.RoadNode
@@ -12,7 +14,6 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import se.umu.lihv0010.explore.LocationServices.Companion.latestLocation
 import kotlin.random.Random
-
 
 class GoalGenerator(mapInput: MapView) {
     private val tag = "DebugExploreGoalGenerator"
@@ -26,16 +27,15 @@ class GoalGenerator(mapInput: MapView) {
 
         // TODO: Check if new marker is within 300m, if it is, generate a new one til we get there
         // TODO: Also check so that the latest point isnt the same as one that has been done before, within x meters
-        /*
-        while (latestLocation.distanceToAsDouble(newGoal.position) < distance * 0.9) {
 
-        }*/
-
+        // TODO: Fix icons and stylize
         val randomPoint = latestLocation.destinationPoint(distanceAway, randomDirection())
         newGoal.position = getClosestRoadAndPath(randomPoint, distanceAway) // TODO: Find the 500m line on this path and pick that instead of full path
-
-
-        // TODO: Add distance and points
+        newGoal.image = ContextCompat.getDrawable(map.context, R.drawable.ic_dialog_info)
+        newGoal.title = "Current goal"
+        newGoal.snippet = "This goal is worth $distanceAway points!"
+        newGoal.subDescription = "$distanceAway meters away"
+        //newGoal.icon = ContextCompat.getDrawable(map.context, R.drawable.ic_menu_today)
 
         return newGoal
     }
@@ -71,9 +71,6 @@ class GoalGenerator(mapInput: MapView) {
         val path = roadManager.getRoad(waypoints)
         val pathOverlay: Polyline = RoadManager.buildRoadOverlay(path)
 
-        //Log.d(tag, pathOverlay.actualPoints.toString())
-
-        //Log.d(tag, "Polyline size: " + pathOverlay.actualPoints.size)
 
         var distance: Double = 0.0
         val duplicateList = pathOverlay.actualPoints.toMutableList()

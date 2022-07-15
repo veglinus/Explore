@@ -31,12 +31,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var locationServices: LocationServices
 
     // TODO: Cancel button for goal (maybe allow user to finish x meters away for less points)
-    // TODO: Background activity
+    // TODO: Custom icons for player and goal
 
     // TODO: Achievements
-    // TODO: Custom icons for player and goal
-    // TODO: Listen to WatchOS Heartrate sensor?
+    // TODO: Track time it takes to go to goal
 
+    // TODO: Background activity
     // TODO: Battery saver mode like in POGO
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {

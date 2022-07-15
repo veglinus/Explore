@@ -44,7 +44,7 @@ class Game(inputMap: MapView) {
                 goals.remove(goal)
                 visitedGoals.add(goal)
 
-                // TODO: Need to find exact goal and remove it, so we can have multiple
+                // If we want multiple goals we need to find exact goal
                 map.overlays.removeLast()
                 map.overlays.removeLast()
 
@@ -55,7 +55,7 @@ class Game(inputMap: MapView) {
     }
 
     private fun addPoints() {
-        points.value = points.value!! + 10
+        points.value = points.value!! + 10 // TODO: Magic number, should be waypoint score
         Log.d(tag, "Points are now: " + points.value)
     }
 

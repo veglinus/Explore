@@ -65,12 +65,17 @@ class LocationServices(inputMap: MapView, gameInput: Game) {
         }
 
         if (isLocationPermissionGranted()) {
-            myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(map.context), map)
-            myLocationOverlay.enableMyLocation()
-            myLocationOverlay.enableFollowLocation()
-            map.overlays.add(myLocationOverlay)
-            map.invalidate()
+            createMyLocationMarker()
         }
+    }
+
+    private fun createMyLocationMarker() {
+        myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(map.context), map)
+        myLocationOverlay.enableMyLocation()
+        myLocationOverlay.enableFollowLocation()
+        //myLocationOverlay.setPersonIcon() // TODO: Set icon of player
+        map.overlays.add(myLocationOverlay)
+        map.invalidate()
     }
 
     private fun isLocationPermissionGranted(): Boolean {
