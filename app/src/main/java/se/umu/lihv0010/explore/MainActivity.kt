@@ -1,9 +1,12 @@
 package se.umu.lihv0010.explore
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -36,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     // TODO: Achievements
     // TODO: Track time it takes to go to goal
 
+    // TODO: App icon & change name
     // TODO: Background activity
     // TODO: Battery saver mode like in POGO
 
@@ -103,6 +107,16 @@ class MainActivity : AppCompatActivity() {
         game.points.observe(this, Observer {
             binding.points.text = it.toString()
         })
+    }
+
+    fun onAchievementClick() {
+        val intent = Intent(this, AchievementsActivity::class.java)
+        startActivity(intent)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

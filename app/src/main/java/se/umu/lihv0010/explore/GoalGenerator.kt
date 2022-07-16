@@ -1,6 +1,5 @@
 package se.umu.lihv0010.explore
 
-import android.R
 import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -31,11 +30,11 @@ class GoalGenerator(mapInput: MapView) {
         // TODO: Fix icons and stylize
         val randomPoint = latestLocation.destinationPoint(distanceAway, randomDirection())
         newGoal.position = getClosestRoadAndPath(randomPoint, distanceAway) // TODO: Find the 500m line on this path and pick that instead of full path
-        newGoal.image = ContextCompat.getDrawable(map.context, R.drawable.ic_dialog_info)
+        newGoal.image = ContextCompat.getDrawable(map.context, android.R.drawable.ic_dialog_info)
         newGoal.title = "Current goal"
         newGoal.snippet = "This goal is worth $distanceAway points!"
         newGoal.subDescription = "$distanceAway meters away"
-        //newGoal.icon = ContextCompat.getDrawable(map.context, R.drawable.ic_menu_today)
+        newGoal.icon = ContextCompat.getDrawable(map.context, R.drawable.ic_flag_checkered)
 
         return newGoal
     }
