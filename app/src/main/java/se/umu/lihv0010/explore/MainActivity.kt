@@ -36,6 +36,8 @@ class MainActivity : AppCompatActivity() {
     // TODO: Cancel button for goal (maybe allow user to finish x meters away for less points)
     // TODO: Custom icons for player and goal
 
+    // TODO: Retain goal in mapview when switching to new activity
+
     // TODO: Achievements
     // TODO: Track time it takes to go to goal
 
@@ -109,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    fun onAchievementClick() {
+    fun onAchievementClick(mi: MenuItem) {
         val intent = Intent(this, AchievementsActivity::class.java)
         startActivity(intent)
     }
