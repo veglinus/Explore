@@ -11,19 +11,19 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.preference.PreferenceManager
+import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.MapEventsOverlay
 import se.umu.lihv0010.explore.databinding.ActivityMainBinding
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.properties.Delegates
+import java.io.File
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var map : MapView
@@ -34,9 +34,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var locationServices: LocationServices
 
     // TODO: Cancel button for goal (maybe allow user to finish x meters away for less points)
-    // TODO: Custom icons for player and goal
-
-    // TODO: Retain goal in mapview when switching to new activity
+    // TODO: Custom icons for player and goal, set markers to have a global standard icon to surpass bug of kml markers having wrong marker
 
     // TODO: Achievements
     // TODO: Track time it takes to go to goal
@@ -65,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         setupMapAndGameLogic()
         //setupMapTouchListeners()
         setupUI()
+        showSavedMapData()
     }
 
     private fun setupMapAndGameLogic() {
@@ -111,6 +110,13 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    private fun showSavedMapData() {
+        val localFile: File = kmlDocument.getDefaultPathForAndroid(this, "my_data.kml")
+        kmlDocument.parseKMLFile(localFile)
+        val kmlOverlay = kmlDocument.mKmlRoot.buildOverlay(map, null, null, kmlDocument) as FolderOverlay
+        map.overlays.add(kmlOverlay)
+    }
+
     fun onAchievementClick(mi: MenuItem) {
         val intent = Intent(this, AchievementsActivity::class.java)
         startActivity(intent)
@@ -139,9 +145,16 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         map.onResume()
+        Log.d(tag, "ONRESUME")
     }
     override fun onPause() {
         super.onPause()
         map.onPause()
+        val localFile: File = kmlDocument.getDefaultPathForAndroid(this, "my_data.kml")
+        kmlDocument.saveAsKML(localFile);
+    }
+
+    companion object {
+        var kmlDocument = KmlDocument()
     }
 }

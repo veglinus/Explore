@@ -64,12 +64,7 @@ class GoalGenerator(mapInput: MapView) {
 
     private fun getClosestRoadAndPath(newGoal: GeoPoint, selectedDistance: Double): GeoPoint {
         // Creates path from start to finish
-        val roadManager: RoadManager = OSRMRoadManager(map.context, "ExploreApp/1.0")
-        (roadManager as OSRMRoadManager).setMean(OSRMRoadManager.MEAN_BY_FOOT)
-        val waypoints: ArrayList<GeoPoint> = arrayListOf(latestLocation, newGoal)
-        val path = roadManager.getRoad(waypoints)
-        val pathOverlay: Polyline = RoadManager.buildRoadOverlay(path)
-
+        val pathOverlay = getPath(newGoal)
 
         var distance: Double = 0.0
         val duplicateList = pathOverlay.actualPoints.toMutableList()
@@ -86,9 +81,20 @@ class GoalGenerator(mapInput: MapView) {
         pathOverlay.usePath(true) // Uncomment to see first generated path which is as long as the distance variable
 
         map.overlays.add(pathOverlay)
+        MainActivity.kmlDocument.mKmlRoot.addOverlay(pathOverlay, MainActivity.kmlDocument)
+
         // TODO: Zoom to new goal
         map.zoomToBoundingBox(pathOverlay.bounds, true)
         return pathOverlay.actualPoints.last() // Returns our new point, on a reachable road
+    }
+
+    private fun getPath(newGoal: GeoPoint): Polyline {
+        val roadManager: RoadManager = OSRMRoadManager(map.context, "ExploreApp/1.0")
+        (roadManager as OSRMRoadManager).setMean(OSRMRoadManager.MEAN_BY_FOOT)
+        val waypoints: ArrayList<GeoPoint> = arrayListOf(latestLocation, newGoal)
+        val path = roadManager.getRoad(waypoints)
+        val pathOverlay: Polyline = RoadManager.buildRoadOverlay(path)
+        return pathOverlay
     }
 
 }

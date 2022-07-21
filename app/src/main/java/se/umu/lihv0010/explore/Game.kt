@@ -1,28 +1,53 @@
 package se.umu.lihv0010.explore
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
-import org.osmdroid.bonuspack.routing.OSRMRoadManager
-import org.osmdroid.bonuspack.routing.RoadManager
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.Polyline
-import kotlin.random.Random
+import java.lang.Exception
+import se.umu.lihv0010.explore.MainActivity.Companion
+import java.io.File
+
 
 class Game(inputMap: MapView) {
     private val tag = "DebugExploreGameClass"
     private val map = inputMap
 
-    // TODO: These three values need to be saved and restored
-    var homeLocation = GeoPoint(57.86973548791104, 11.974444448918751)
-    var points: MutableLiveData<Int> = MutableLiveData(0)
-    private var goalExists: Boolean = false
+    var prefs: SharedPreferences = map.context.getSharedPreferences(
+        "preferences", Context.MODE_PRIVATE
+    )
+    private val gson = Gson()
+
+    private var homeLocation: GeoPoint
+    var points: MutableLiveData<Int>
 
     private var goals: MutableList<GeoPoint> = mutableListOf() // List of current goals
+    private var goalExists: Boolean
     private var visitedGoals: MutableList<GeoPoint> = mutableListOf() // Delete each day
     private val goalGenerator = GoalGenerator(map)
+
+    init {
+        //prefs.edit().clear().commit() // Debug: To force delete prefs
+        Log.d(tag, "initiating game")
+
+        val homeLocationSaved = prefs.getString("homeLocation", null)
+        homeLocation = if (homeLocationSaved != null) {
+            gson.fromJson(homeLocationSaved, GeoPoint::class.java)
+        } else {
+            GeoPoint(57.86973548791104, 11.974444448918751) // TODO: Hardcoded atm
+        }
+
+        points = MutableLiveData(prefs.getInt("points", 0))
+        goalExists = prefs.getBoolean("goalExists", false)
+
+    }
 
     fun spawnGoal(distanceAway: Double) {
         if (!goalExists) {
@@ -30,19 +55,36 @@ class Game(inputMap: MapView) {
             val newGoal = goalGenerator.new(distanceAway)
             goals.add(newGoal.position)
             map.overlays.add(newGoal)
-            map.invalidate()
             goalExists = true
+            MainActivity.kmlDocument.mKmlRoot.addOverlay(newGoal, MainActivity.kmlDocument)
+            map.invalidate()
+            saveAll()
         } else {
          Log.d(tag, "Goal already exists.")
         }
     }
 
+    private fun saveAll() {
+        try {
+            val homeLocationJson = gson.toJson(homeLocation)
+            prefs.edit().putString("homeLocation", homeLocationJson).apply()
+            prefs.edit().putInt("points", points.value!!).apply()
+            prefs.edit().putBoolean("goalExists", goalExists).apply()
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
     fun checkIfGoalReached(location: GeoPoint) {
+        val myGoals = MainActivity.kmlDocument.mKmlRoot.mItems
+        Log.d(tag, myGoals.toString())
+
         for (goal in goals) {
-            if (location.distanceToAsDouble(goal) < 50.0) {
+            if (location.distanceToAsDouble(goal) < 10.0) {
 
                 goals.remove(goal)
                 visitedGoals.add(goal)
+                goalExists = false
 
                 // If we want multiple goals we need to find exact goal
                 map.overlays.removeLast()
@@ -66,11 +108,4 @@ class Game(inputMap: MapView) {
         map.invalidate()
     }
 
-    private fun goHome() {
-        val newGoal = Marker(map)
-        //newGoal.position = getClosestRoadAndPath(homeLocation) // TODO: Find the 500m line on this path and pick that instead of full path
-        goals.add(newGoal.position)
-        map.overlays.add(newGoal)
-        map.invalidate()
-    }
 }

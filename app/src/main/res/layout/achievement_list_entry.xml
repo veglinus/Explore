@@ -10,7 +10,8 @@
         android:id="@+id/iconIv"
         android:src="@drawable/ic_launcher_background"
         android:layout_width="80dp"
-        android:layout_height="80dp" />
+        android:layout_height="80dp"
+        android:contentDescription="TODO" />
     <LinearLayout
         android:layout_margin="5dp"
         android:layout_width="match_parent"

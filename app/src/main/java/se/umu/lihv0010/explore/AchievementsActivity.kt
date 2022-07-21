@@ -1,7 +1,6 @@
 package se.umu.lihv0010.explore
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -19,15 +18,12 @@ class AchievementsActivity : AppCompatActivity() {
         binding = ActivityAchievementsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         //val entryAdapter = ArrayAdapter(this, R.layout.achievement_list_entry, array)
-        binding.achievementsList.adapter = CustomAdapter(this)
+        binding.achievementsList.adapter = ListAdapter(this)
     }
 
-    private class CustomAdapter(context: Context): BaseAdapter() {
+    private class ListAdapter(context: Context): BaseAdapter() {
         private val mContext: Context
-        private val achievement1 = Achievement("Walker", "Travel 1km by walking to goals.", 1000.0, 500.0)
-        private val achievement2 = Achievement("Runner", "Travel 10km by walking to goals.", 10000.0, 500.0)
-
-        private val achievementList = arrayListOf<Achievement>(achievement1, achievement2)
+        private val achievementList = Achievements.achievementList
 
         init {
             mContext = context
