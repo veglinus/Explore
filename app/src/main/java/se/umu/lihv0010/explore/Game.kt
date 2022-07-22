@@ -8,8 +8,13 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import org.osmdroid.bonuspack.kml.KmlDocument
+import org.osmdroid.bonuspack.kml.KmlFeature
+import org.osmdroid.bonuspack.kml.KmlGeometry
+import org.osmdroid.bonuspack.kml.KmlPlacemark
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.Marker
 import java.lang.Exception
 import se.umu.lihv0010.explore.MainActivity.Companion
@@ -28,13 +33,13 @@ class Game(inputMap: MapView) {
     private var homeLocation: GeoPoint
     var points: MutableLiveData<Int>
 
-    private var goals: MutableList<GeoPoint> = mutableListOf() // List of current goals
+    var goals: MutableList<GeoPoint> = mutableListOf() // List of current goals
     private var goalExists: Boolean
     private var visitedGoals: MutableList<GeoPoint> = mutableListOf() // Delete each day
     private val goalGenerator = GoalGenerator(map)
 
     init {
-        //prefs.edit().clear().commit() // Debug: To force delete prefs
+        //clearData()
         Log.d(tag, "initiating game")
 
         val homeLocationSaved = prefs.getString("homeLocation", null)
@@ -47,6 +52,18 @@ class Game(inputMap: MapView) {
         points = MutableLiveData(prefs.getInt("points", 0))
         goalExists = prefs.getBoolean("goalExists", false)
 
+    }
+
+    private fun clearData() {
+        repeat(100) {
+            println("CLEARING ALL DATA IS ON!!!!!")
+        }
+
+        val clearDocument = KmlDocument()
+        val localFile: File = clearDocument.getDefaultPathForAndroid(map.context, "my_data.kml")
+        clearDocument.saveAsKML(localFile);
+
+        prefs.edit().clear().commit() // Debug: To force delete prefs
     }
 
     fun spawnGoal(distanceAway: Double) {
@@ -76,28 +93,34 @@ class Game(inputMap: MapView) {
     }
 
     fun checkIfGoalReached(location: GeoPoint) {
-        val myGoals = MainActivity.kmlDocument.mKmlRoot.mItems
-        Log.d(tag, myGoals.toString())
 
-        for (goal in goals) {
+        for ((index, goal) in goals.withIndex()) {
+
             if (location.distanceToAsDouble(goal) < 10.0) {
+                val kmlIndex = index + 1
 
-                goals.remove(goal)
-                visitedGoals.add(goal)
+                // TODO: Test
+                val pointsToAdd = MainActivity.kmlDocument.mKmlRoot.mItems[kmlIndex].mDescription.substringBefore(".").toInt()
+
                 goalExists = false
-
-                // If we want multiple goals we need to find exact goal
-                map.overlays.removeLast()
-                map.overlays.removeLast()
-
+                MainActivity.kmlDocument.mKmlRoot.mItems.removeAt(kmlIndex) // Removes marker
+                MainActivity.kmlDocument.mKmlRoot.mItems.removeAt(kmlIndex - 1) // Removes pathoverlay
                 Toast.makeText(map.context, "Goal reached! Points have been added.", Toast.LENGTH_LONG).show() // TODO: fix
-                addPoints()
+
+                addPoints(pointsToAdd)
+                saveAll()
+
+                val localFile: File = Companion.kmlDocument.getDefaultPathForAndroid(map.context, "my_data.kml")
+                Companion.kmlDocument.saveAsKML(localFile)
+
+                // TODO: MAIN: Two goals in a row is not functional
+                map.invalidate()
             }
         }
     }
 
-    private fun addPoints() {
-        points.value = points.value!! + 10 // TODO: Magic number, should be waypoint score
+    private fun addPoints(newPoints: Int) {
+        points.value = points.value!! + newPoints // TODO: Magic number, should be waypoint score
         Log.d(tag, "Points are now: " + points.value)
     }
 

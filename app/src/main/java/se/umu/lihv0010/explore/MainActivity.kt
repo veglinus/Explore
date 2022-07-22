@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var game: Game
     private lateinit var locationServices: LocationServices
 
+    // TODO: Detect close to goal properly
     // TODO: Cancel button for goal (maybe allow user to finish x meters away for less points)
     // TODO: Custom icons for player and goal, set markers to have a global standard icon to surpass bug of kml markers having wrong marker
 
@@ -145,8 +146,22 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         map.onResume()
-        Log.d(tag, "ONRESUME")
+        populateGameGoals()
     }
+
+    private fun populateGameGoals() {
+        val myGoals = kmlDocument.mKmlRoot.mItems
+        if (myGoals != null) {
+            for (goal in myGoals) {
+                if (goal.javaClass.name == "org.osmdroid.bonuspack.kml.KmlPlacemark") {
+                    val goalPoint: GeoPoint = GeoPoint(goal.boundingBox.centerLatitude, goal.boundingBox.centerLongitude)
+                    game.goals.add(goalPoint)
+                }
+            }
+        }
+    }
+
+
     override fun onPause() {
         super.onPause()
         map.onPause()

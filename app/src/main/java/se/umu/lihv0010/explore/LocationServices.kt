@@ -15,35 +15,33 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
-class LocationServices(inputMap: MapView, gameInput: Game) {
+
+class LocationServices(private val map: MapView, private val game: Game) {
     private val tag = "DebugExploreLocationManagerClass"
-    private val map = inputMap
-    private val game = gameInput
 
     private val locationRequest = LocationRequest.create().apply {
-        interval = 200
-        fastestInterval = 100
-        maxWaitTime = 200
+        interval = 60
+        fastestInterval = 30
+        maxWaitTime = 2
         priority = Priority.PRIORITY_HIGH_ACCURACY
     }
 
-    lateinit var locationManager: LocationManager
-    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    var locationManager: LocationManager = map.context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private var fusedLocationProviderClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(map.context)
     private lateinit var locationCallback: LocationCallback
     lateinit var myLocationOverlay: MyLocationNewOverlay
 
     init {
         initLocationListener()
+        createMyLocationMarker()
     }
 
+    @SuppressLint("MissingPermission")
     private fun initLocationListener() {
-        // TODO: Duplicate looking for location atm, both this and my location overlay
-        @SuppressLint("MissingPermission")
         if (isLocationPermissionGranted()) {
-            locationManager = map.context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(map.context)
             locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
+                    //Log.d(tag, "on location result")
                     super.onLocationResult(locationResult)
                     locationResult.lastLocation?.let {
                         val result = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
@@ -52,27 +50,26 @@ class LocationServices(inputMap: MapView, gameInput: Game) {
                             if (newLocation != latestLocation) {
                                 latestLocation = newLocation
                                 game.checkIfGoalReached(newLocation)
-                                Log.d(tag, latestLocation.toString())
+                                Log.d(tag, "New location: $latestLocation")
                             }
                         }
-
                     }
                 }
             }
             fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
+
         } else {
             Log.d(tag, "Location services not granted")
         }
 
-        if (isLocationPermissionGranted()) {
-            createMyLocationMarker()
-        }
     }
 
     private fun createMyLocationMarker() {
-        myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(map.context), map)
+        val provider = GpsMyLocationProvider(map.context)
+        myLocationOverlay = MyLocationNewOverlay(provider, map)
         myLocationOverlay.enableMyLocation()
         myLocationOverlay.enableFollowLocation()
+
         //myLocationOverlay.setPersonIcon() // TODO: Set icon of player
         map.overlays.add(myLocationOverlay)
         map.invalidate()
