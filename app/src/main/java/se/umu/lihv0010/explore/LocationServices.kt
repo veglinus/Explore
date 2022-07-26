@@ -48,6 +48,7 @@ class LocationServices(private val map: MapView, private val game: Game) {
                         if (result != null) {
                             val newLocation = GeoPoint(result.latitude, result.longitude)
                             if (newLocation != latestLocation) {
+                                game.addDistanceTravelled(latestLocation, newLocation)
                                 latestLocation = newLocation
                                 game.checkIfGoalReached(newLocation)
                                 Log.d(tag, "New location: $latestLocation")

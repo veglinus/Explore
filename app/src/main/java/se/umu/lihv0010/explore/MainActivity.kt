@@ -1,6 +1,8 @@
 package se.umu.lihv0010.explore
 
 import android.content.Intent
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
@@ -11,9 +13,13 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.preference.PreferenceManager
 import org.osmdroid.bonuspack.kml.KmlDocument
+import org.osmdroid.bonuspack.kml.Style
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -33,12 +39,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var game: Game
     private lateinit var locationServices: LocationServices
 
-    // TODO: Detect close to goal properly
     // TODO: Cancel button for goal (maybe allow user to finish x meters away for less points)
-    // TODO: Custom icons for player and goal, set markers to have a global standard icon to surpass bug of kml markers having wrong marker
+    // TODO: Custom icons for player
 
     // TODO: Achievements
-    // TODO: Track time it takes to go to goal
 
     // TODO: App icon & change name
     // TODO: Background activity
@@ -62,9 +66,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupMapAndGameLogic()
-        //setupMapTouchListeners()
         setupUI()
-        showSavedMapData()
     }
 
     private fun setupMapAndGameLogic() {
@@ -73,49 +75,36 @@ class MainActivity : AppCompatActivity() {
         map.setMultiTouchControls(true)
         map.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
         map.controller.setZoom(18.0) // 18 should be standard
-
         game = Game(map)
         locationServices = LocationServices(map, game)
     }
 
-    private fun setupMapTouchListeners() {
-        val mReceive: MapEventsReceiver = object : MapEventsReceiver {
-            override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
-                Log.d(tag, "Single tap")
-                return false
-            }
-
-            override fun longPressHelper(p: GeoPoint): Boolean {
-                Log.d(tag, "Long press")
-                //placeMarker(p) // TODO
-                return false
-            }
-        }
-        val overlayEvents = MapEventsOverlay(mReceive)
-        map.overlays.add(overlayEvents)
-    }
-
     private fun setupUI() {
-        binding.testButton.setOnClickListener {
-            // TODO: Selector for distance
-            game.spawnGoal(500.0)
-        }
-
+        fabButtonHandler()
         binding.centerButton.setOnClickListener {
             locationServices.myLocationOverlay.enableFollowLocation()
             binding.centerButton.visibility = View.GONE
         }
-
         game.points.observe(this, Observer {
             binding.points.text = it.toString()
         })
     }
 
-    private fun showSavedMapData() {
-        val localFile: File = kmlDocument.getDefaultPathForAndroid(this, "my_data.kml")
-        kmlDocument.parseKMLFile(localFile)
-        val kmlOverlay = kmlDocument.mKmlRoot.buildOverlay(map, null, null, kmlDocument) as FolderOverlay
-        map.overlays.add(kmlOverlay)
+    private fun fabButtonHandler() {
+        binding.fab.setOnClickListener {
+            // TODO: Selector for distance
+            game.spawnGoal(500.0)
+            binding.fab.visibility = View.GONE
+        }
+
+        game.goalExists.observe(this, Observer {
+            if (it == true) {
+                //Log.d(tag, "Goal exists.")
+                binding.fab.visibility = View.GONE
+            } else {
+                binding.fab.visibility = View.VISIBLE
+            }
+        })
     }
 
     fun onAchievementClick(mi: MenuItem) {
@@ -143,30 +132,45 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        val localFile: File = kmlDocument.getDefaultPathForAndroid(this, "my_data.kml")
+        kmlDocument.saveAsKML(localFile); // Saves all icons and paths to local file
+        game.saveAll()
+        super.onPause()
+        map.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
         map.onResume()
+        showSavedMapData()
         populateGameGoals()
+    }
+
+    private fun showSavedMapData() {
+        Log.d(tag, "Parsing KMLdocument")
+        val localFile: File = kmlDocument.getDefaultPathForAndroid(map.context, "my_data.kml")
+        kmlDocument.parseKMLFile(localFile) // Parses the saved local file into current kmlDocument object
+        val icon = ContextCompat.getDrawable(this, R.drawable.ic_flag_checkered) // Goal icon
+        val defaultBitmap = icon?.toBitmap()
+        val overlayStyle = Style(defaultBitmap, 0x00F, 3.0f, 0x000) // Styling for icons and path
+        val kmlOverlay = kmlDocument.mKmlRoot.buildOverlay(map, overlayStyle, null, kmlDocument) // Overlay for icons and path
+        map.overlays.add(kmlOverlay)
+        map.invalidate()
     }
 
     private fun populateGameGoals() {
         val myGoals = kmlDocument.mKmlRoot.mItems
         if (myGoals != null) {
+            //Log.d(tag, "Populating goals in game class")
             for (goal in myGoals) {
-                if (goal.javaClass.name == "org.osmdroid.bonuspack.kml.KmlPlacemark") {
+                if (goal.javaClass.name == "org.osmdroid.bonuspack.kml.KmlPlacemark" && goal.mName != null) {
                     val goalPoint: GeoPoint = GeoPoint(goal.boundingBox.centerLatitude, goal.boundingBox.centerLongitude)
                     game.goals.add(goalPoint)
+                    game.goalExists.value = game.goals.isNotEmpty()
                 }
             }
         }
-    }
-
-
-    override fun onPause() {
-        super.onPause()
-        map.onPause()
-        val localFile: File = kmlDocument.getDefaultPathForAndroid(this, "my_data.kml")
-        kmlDocument.saveAsKML(localFile);
     }
 
     companion object {

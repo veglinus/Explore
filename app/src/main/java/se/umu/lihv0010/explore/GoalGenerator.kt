@@ -81,7 +81,7 @@ class GoalGenerator(mapInput: MapView) {
         pathOverlay.usePath(true) // Uncomment to see first generated path which is as long as the distance variable
 
         map.overlays.add(pathOverlay)
-        MainActivity.kmlDocument.mKmlRoot.addOverlay(pathOverlay, MainActivity.kmlDocument)
+        MainActivity.Companion.kmlDocument.mKmlRoot.addOverlay(pathOverlay, MainActivity.kmlDocument)
 
         // TODO: Zoom to new goal
         map.zoomToBoundingBox(pathOverlay.bounds, true)

@@ -3,9 +3,9 @@ package se.umu.lihv0010.explore
 class Achievement(
     val title: String,
     val description: String,
-    private val goalValue: Double,
-    private val progressValue: Double
+    private val goalValue: Int,
+    private val progressValue: Int
     ) {
 
-    val progress = ((progressValue / goalValue) * 100).toInt()
+    val progress = ((progressValue / goalValue) * 100)
 }

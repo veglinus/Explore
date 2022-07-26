@@ -17,14 +17,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/test_button"
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:text="@string/test_text"
-        android:layout_marginEnd="5dp"
+        android:layout_gravity="end|bottom"
+        android:src="@drawable/ic_flag_checkered"
+        android:contentDescription="New goal"
+        android:layout_margin="16dp"
         />
 
     <Button
