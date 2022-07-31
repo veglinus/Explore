@@ -4,4 +4,6 @@
     <string name="test_text">Test</string>
     <string name="center">Center</string>
     <string name="achievements">Achievements</string>
+    <string name="new_goal">New goal</string>
+    <string name="points">Points</string>
 </resources>

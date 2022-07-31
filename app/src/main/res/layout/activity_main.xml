@@ -13,7 +13,7 @@
         android:id="@+id/points"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Points"
+        android:text="@string/points"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -24,21 +24,30 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_gravity="end|bottom"
+
         android:src="@drawable/ic_flag_checkered"
-        android:contentDescription="New goal"
+        android:contentDescription="@string/new_goal"
         android:layout_margin="16dp"
-        />
+        android:animateLayoutChanges="true" />
 
-    <Button
+    <ImageButton
         android:id="@+id/center_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/center"
-        android:visibility="gone"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="16dp"
+        android:padding="1dp"
 
-        app:layout_constraintBottom_toBottomOf="@+id/mapview"
+        android:src="@drawable/ic_menu_mylocation"
+        android:background="@color/design_default_color_secondary"
+        android:scaleType="fitXY"
+        android:visibility="invisible"
+
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+
+        android:animateLayoutChanges="true"
+        android:contentDescription="@string/center" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

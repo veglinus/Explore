@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         StrictMode.setThreadPolicy(policy) // https://stackoverflow.com/questions/21213224/roadmanager-for-osmdroid-error
 
         getInstance().userAgentValue = "ExploreApp/1.0"
-        getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
+        //getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
         setContentView(binding.root)
 
         setupMapAndGameLogic()
@@ -133,8 +133,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
-        val localFile: File = kmlDocument.getDefaultPathForAndroid(this, "my_data.kml")
-        kmlDocument.saveAsKML(localFile); // Saves all icons and paths to local file
         game.saveAll()
         super.onPause()
         map.onPause()
@@ -143,20 +141,8 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         map.onResume()
-        showSavedMapData()
+        game.showSavedMapData()
         populateGameGoals()
-    }
-
-    private fun showSavedMapData() {
-        Log.d(tag, "Parsing KMLdocument")
-        val localFile: File = kmlDocument.getDefaultPathForAndroid(map.context, "my_data.kml")
-        kmlDocument.parseKMLFile(localFile) // Parses the saved local file into current kmlDocument object
-        val icon = ContextCompat.getDrawable(this, R.drawable.ic_flag_checkered) // Goal icon
-        val defaultBitmap = icon?.toBitmap()
-        val overlayStyle = Style(defaultBitmap, 0x00F, 3.0f, 0x000) // Styling for icons and path
-        val kmlOverlay = kmlDocument.mKmlRoot.buildOverlay(map, overlayStyle, null, kmlDocument) // Overlay for icons and path
-        map.overlays.add(kmlOverlay)
-        map.invalidate()
     }
 
     private fun populateGameGoals() {

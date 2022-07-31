@@ -33,12 +33,13 @@ class Game(inputMap: MapView) {
     var totalDistanceTravelled: Int
 
     var goals: MutableList<GeoPoint> = mutableListOf() // List of current goals
+    var goalsWorthPoints: MutableList<Int> = mutableListOf()
     var goalExists: MutableLiveData<Boolean> = MutableLiveData(goals.isNotEmpty())
     //private var visitedGoals: MutableList<GeoPoint> = mutableListOf() // Delete each day
     private val goalGenerator = GoalGenerator(map)
 
     init {
-        clearData()
+        //clearData()
         Log.d(tag, "initiating game")
 
         val homeLocationSaved = prefs.getString("homeLocation", null)
@@ -51,6 +52,14 @@ class Game(inputMap: MapView) {
         points = MutableLiveData(prefs.getInt("points", 0))
         //goalExists = prefs.getBoolean("goalExists", false)
         totalDistanceTravelled = prefs.getInt("totalDistanceTravelled", 0)
+
+        val pointsString = prefs.getString("goalsWorthPoints", null)?.split(",")
+        if (pointsString != null) {
+            for (string in pointsString) {
+                goalsWorthPoints.add(string.toInt())
+            }
+        }
+
 
     }
 
@@ -69,6 +78,7 @@ class Game(inputMap: MapView) {
             println("Spawning goal!")
             val newGoal = goalGenerator.new(distanceAway)
             goals.add(newGoal.position)
+            goalsWorthPoints.add(distanceAway.toInt())
             map.overlays.add(newGoal)
             goalExists.value = goals.isNotEmpty()
             Companion.kmlDocument.mKmlRoot.addOverlay(newGoal, Companion.kmlDocument)
@@ -81,11 +91,15 @@ class Game(inputMap: MapView) {
 
     fun saveAll() {
         try {
+            val localFile: File = Companion.kmlDocument.getDefaultPathForAndroid(map.context, "my_data.kml")
+            Companion.kmlDocument.saveAsKML(localFile)
+
             val homeLocationJson = gson.toJson(homeLocation)
             prefs.edit().putString("homeLocation", homeLocationJson).apply()
             prefs.edit().putInt("points", points.value!!).apply()
             //prefs.edit().putBoolean("goalExists", goalExists).apply()
             prefs.edit().putInt("totalDistanceTravelled", totalDistanceTravelled).apply()
+            prefs.edit().putString("goalsWorthPoints", goalsWorthPoints.joinToString(",")).apply()
         } catch (e: Exception) {
             throw e
         }
@@ -108,35 +122,39 @@ class Game(inputMap: MapView) {
         Log.d(tag, "Map Overlays: " + map.overlays.toString())
 
         for ((index, goal) in goals.withIndex()) {
-            Log.d(tag, "Loop: index: $index goal: $goal")
-
+            //Log.d(tag, "Loop: index: $index goal: $goal")
             if (location.distanceToAsDouble(goal) < 100.0) {
-
                 Toast.makeText(map.context, "Goal reached! Points have been added.", Toast.LENGTH_LONG).show()
 
-                // TODO: Test if points are added correctly
-                /*
-                val pointsToAdd: Double? = Companion.kmlDocument.mKmlRoot.mItems[kmlIndex].mDescription.substringBefore(" points!").substringAfter("This goal is worth ").toDoubleOrNull()
-                if (pointsToAdd != null) {
-                    addPoints(pointsToAdd.toInt())
-                }*/
-
-
+                addPoints(index) // TODO: Test if points are added correctly
                 removeGoalAndPathFromOverlays(index)
-
-                // Remove goal from goal list in Game
-                goals.remove(goal)
+                goals.remove(goal) // Remove goal from goal list in Game
                 goalExists.value = goals.isNotEmpty()
 
                 saveAll()
-                val localFile: File = Companion.kmlDocument.getDefaultPathForAndroid(map.context, "my_data.kml")
-                Companion.kmlDocument.saveAsKML(localFile)
 
-                // TODO: Make FAB appear again
-
+                if (map.overlays.size >= 2) {
+                    map.overlays.removeAt(1)
+                    Companion.kmlDocument = KmlDocument()
+                    showSavedMapData()
+                }
                 map.invalidate()
             }
         }
+    }
+
+    fun showSavedMapData() {
+        Log.d(tag, "Parsing KMLdocument")
+        val localFile: File = Companion.kmlDocument.getDefaultPathForAndroid(map.context, "my_data.kml")
+        Companion.kmlDocument.parseKMLFile(localFile) // Parses the saved local file into current kmlDocument object
+        val icon = ContextCompat.getDrawable(map.context, R.drawable.ic_flag_checkered) // Goal icon
+        val defaultBitmap = icon?.toBitmap()
+        val overlayStyle = Style(defaultBitmap, 0x00F, 3.0f, 0x000) // Styling for icons and path
+        val kmlOverlay = Companion.kmlDocument.mKmlRoot.buildOverlay(map, overlayStyle, null,
+            Companion.kmlDocument
+        ) // Overlay for icons and path
+        map.overlays.add(kmlOverlay)
+        map.invalidate()
     }
 
     private fun removeGoalAndPathFromOverlays(index: Int) {
@@ -145,19 +163,25 @@ class Game(inputMap: MapView) {
         if (index != 0) {
             kmlIndex += 1
         }
+
+        // TODO: Only situation that doesn't work is reloading after spawning a goal.
+        // Reaching goal doesnt remove it, even though layers are blank.
+
         // Removing path and marker overlay from KML document
         Companion.kmlDocument.mKmlRoot.mItems.removeAt(kmlIndex) // Removes marker
         Companion.kmlDocument.mKmlRoot.mItems.removeAt(kmlIndex) // Removes pathoverlay
 
-        if (map.overlays.isNotEmpty()) { // Removing path and marker from actual mapview if not loaded from KMLdocument
+        if (map.overlays.size > 2) { // Removing path and marker from actual mapview if not loaded from KMLdocument
             map.overlays.removeAt(index + 3)
             map.overlays.removeAt(index + 2)
         }
     }
 
-    private fun addPoints(newPoints: Int) {
-        points.value = points.value!! + newPoints
+    private fun addPoints(index: Int) {
+        points.value = points.value!! + goalsWorthPoints[index]
         Log.d(tag, "Points are now: " + points.value)
+
+        goalsWorthPoints.remove(index)
     }
 
     private fun placeMarker(p: GeoPoint) {
