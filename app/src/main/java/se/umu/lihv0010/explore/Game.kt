@@ -75,7 +75,7 @@ class Game(inputMap: MapView) {
 
     fun spawnGoal(distanceAway: Double) {
         if (goalExists.value == false) {
-            println("Spawning goal!")
+            Log.d(tag, "Spawning goal!")
             val newGoal = goalGenerator.new(distanceAway)
             goals.add(newGoal.position)
             goalsWorthPoints.add(distanceAway.toInt())
