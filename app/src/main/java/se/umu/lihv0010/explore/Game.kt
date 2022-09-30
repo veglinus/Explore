@@ -127,6 +127,7 @@ class Game(inputMap: MapView) {
                 Toast.makeText(map.context, "Goal reached! Points have been added.", Toast.LENGTH_LONG).show()
 
                 addPoints(index) // TODO: Test if points are added correctly
+                // TODO: Add distance travelled here instead
                 removeGoalAndPathFromOverlays(index)
                 goals.remove(goal) // Remove goal from goal list in Game
                 goalExists.value = goals.isNotEmpty()

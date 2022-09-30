@@ -39,6 +39,10 @@ class LocationServices(private val map: MapView, private val game: Game) {
     @SuppressLint("MissingPermission")
     private fun initLocationListener() {
         if (isLocationPermissionGranted()) {
+
+            // TODO: Listen for activity, if activity is recognized then start measuring/comparing
+
+
             locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
                     //Log.d(tag, "on location result")
@@ -48,7 +52,11 @@ class LocationServices(private val map: MapView, private val game: Game) {
                         if (result != null) {
                             val newLocation = GeoPoint(result.latitude, result.longitude)
                             if (newLocation != latestLocation) {
-                                game.addDistanceTravelled(latestLocation, newLocation)
+
+                                // TODO: Check if user is on walk/run aka not stationary
+                                // using: https://blog.mindorks.com/activity-recognition-in-android-still-walking-running-driving-and-much-more
+
+                                //game.addDistanceTravelled(latestLocation, newLocation)
                                 latestLocation = newLocation
                                 game.checkIfGoalReached(newLocation)
                                 Log.d(tag, "New location: $latestLocation")
