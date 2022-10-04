@@ -39,13 +39,11 @@ class LocationServices(private val map: MapView, private val game: Game) {
     @SuppressLint("MissingPermission")
     private fun initLocationListener() {
         if (isLocationPermissionGranted()) {
-
             // TODO: Listen for activity, if activity is recognized then start measuring/comparing
-
 
             locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
-                    //Log.d(tag, "on location result")
+                    Log.d(tag, "on location result")
                     super.onLocationResult(locationResult)
                     locationResult.lastLocation?.let {
                         val result = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
@@ -84,7 +82,7 @@ class LocationServices(private val map: MapView, private val game: Game) {
         map.invalidate()
     }
 
-    private fun isLocationPermissionGranted(): Boolean {
+    fun isLocationPermissionGranted(): Boolean {
         return if (ActivityCompat.checkSelfPermission(
                 map.context,
                 android.Manifest.permission.ACCESS_COARSE_LOCATION
@@ -97,7 +95,8 @@ class LocationServices(private val map: MapView, private val game: Game) {
                 map.context as Activity,
                 arrayOf(
                     android.Manifest.permission.ACCESS_FINE_LOCATION,
-                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                    android.Manifest.permission.ACTIVITY_RECOGNITION
                 ),
                 1
             )

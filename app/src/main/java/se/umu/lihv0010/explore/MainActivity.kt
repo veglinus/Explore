@@ -1,6 +1,12 @@
 package se.umu.lihv0010.explore
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -18,6 +24,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.preference.PreferenceManager
+import com.google.android.gms.location.*
 import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.bonuspack.kml.Style
 import org.osmdroid.config.Configuration.getInstance
@@ -39,14 +46,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var game: Game
     private lateinit var locationServices: LocationServices
 
-    // TODO: Cancel button for goal (maybe allow user to finish x meters away for less points)
-    // TODO: Custom icons for player
+    // TODO: Setting home
+    // TODO: Menu for creating goal, also for cancelling
 
     // TODO: Achievements
+    // TODO: Background activity (check if user was on foot all the time)
 
+    // Cosmetic:
+    // TODO: Custom icons for player
     // TODO: App icon & change name
-    // TODO: Background activity
-    // TODO: Battery saver mode like in POGO
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         locationServices.myLocationOverlay.disableFollowLocation() // Stops following center marker
@@ -60,7 +68,6 @@ class MainActivity : AppCompatActivity() {
 
         val policy = ThreadPolicy.Builder().permitAll().build() // https://github.com/MKergall/osmbonuspack/wiki/Tutorial_0
         StrictMode.setThreadPolicy(policy) // https://stackoverflow.com/questions/21213224/roadmanager-for-osmdroid-error
-
         getInstance().userAgentValue = "ExploreApp/1.0"
         //getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
         setContentView(binding.root)
@@ -77,6 +84,69 @@ class MainActivity : AppCompatActivity() {
         map.controller.setZoom(18.0) // 18 should be standard
         game = Game(map)
         locationServices = LocationServices(map, game)
+        initActivityListener()
+    }
+
+    // TODO: Section into separate file
+    // TODO: Deregister from updates: https://developer.android.com/guide/topics/location/transitions
+    private lateinit var myPendingIntent : PendingIntent
+    @SuppressLint("MissingPermission")
+    private fun initActivityListener() {
+
+        if (locationServices.isLocationPermissionGranted()) {
+            myPendingIntent = PendingIntent.getActivity(applicationContext,
+                0, intent, // TODO: idk what a request code is https://developer.android.com/guide/components/intents-filters#PendingIntent
+                /* flags */ PendingIntent.FLAG_IMMUTABLE)
+
+            val request = ActivityTransitionRequest(myTransitions())
+            // myPendingIntent is the instance of PendingIntent where the app receives callbacks.
+
+            ActivityRecognition.getClient(this)
+                .requestActivityTransitionUpdates(request, myPendingIntent)
+            Log.d(tag, "Listening for activities!")
+        }
+    }
+
+    private fun myTransitions(): MutableList<ActivityTransition> {
+        val transitions = mutableListOf<ActivityTransition>()
+
+        transitions +=
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.WALKING)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                .build()
+
+        transitions +=
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.WALKING)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                .build()
+
+        transitions +=
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.RUNNING)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                .build()
+
+        transitions +=
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.RUNNING)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                .build()
+
+        transitions +=
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.ON_FOOT)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                .build()
+
+        transitions +=
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.ON_FOOT)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                .build()
+
+        return transitions
     }
 
     private fun setupUI() {

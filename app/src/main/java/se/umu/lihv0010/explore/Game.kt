@@ -56,7 +56,9 @@ class Game(inputMap: MapView) {
         val pointsString = prefs.getString("goalsWorthPoints", null)?.split(",")
         if (pointsString != null) {
             for (string in pointsString) {
-                goalsWorthPoints.add(string.toInt())
+                if (string.isNotEmpty()) {
+                    goalsWorthPoints.add(string.toInt())
+                }
             }
         }
 
@@ -117,9 +119,9 @@ class Game(inputMap: MapView) {
     }
 
     fun checkIfGoalReached(location: GeoPoint) {
-        Log.d(tag, "Goals: $goals")
-        Log.d(tag, "KML Overlays: " + Companion.kmlDocument.mKmlRoot.mItems.toString())
-        Log.d(tag, "Map Overlays: " + map.overlays.toString())
+        //Log.d(tag, "Goals: $goals")
+        //Log.d(tag, "KML Overlays: " + Companion.kmlDocument.mKmlRoot.mItems.toString())
+        //Log.d(tag, "Map Overlays: " + map.overlays.toString())
 
         for ((index, goal) in goals.withIndex()) {
             //Log.d(tag, "Loop: index: $index goal: $goal")

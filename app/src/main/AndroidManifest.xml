@@ -30,6 +30,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver android:name=".MyBroadcastReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="MyBroadcastReceiver" />
+            </intent-filter>
+        </receiver>
 
     </application>
 
