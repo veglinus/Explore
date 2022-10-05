@@ -1,17 +1,9 @@
 package se.umu.lihv0010.explore
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.PendingIntent
-import android.app.PendingIntent.getActivity
-import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
@@ -23,24 +15,17 @@ import android.view.View
 import android.widget.NumberPicker
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
-import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.preference.PreferenceManager
-import com.google.android.gms.location.*
+import com.google.android.gms.location.ActivityRecognition
+import com.google.android.gms.location.ActivityTransition
+import com.google.android.gms.location.ActivityTransitionRequest
+import com.google.android.gms.location.DetectedActivity
 import org.osmdroid.bonuspack.kml.KmlDocument
-import org.osmdroid.bonuspack.kml.Style
 import org.osmdroid.config.Configuration.getInstance
-import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.FolderOverlay
-import org.osmdroid.views.overlay.MapEventsOverlay
 import se.umu.lihv0010.explore.databinding.ActivityMainBinding
-import java.io.File
 
 
 class MainActivity : AppCompatActivity() {
@@ -55,7 +40,6 @@ class MainActivity : AppCompatActivity() {
     // TODO: Achievements
 
     // Cosmetic:
-    // TODO: Custom icons for player
     // TODO: App icon & change name
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -88,9 +72,10 @@ class MainActivity : AppCompatActivity() {
         map.controller.setZoom(18.0) // 18 should be standard
         game = Game(map)
         locationServices = LocationServices(map, game)
-        initActivityListener()
+        //initActivityListener()
     }
 
+    /*
     // TODO: Section into separate file
     // TODO: Deregister from updates: https://developer.android.com/guide/topics/location/transitions
     private lateinit var myPendingIntent : PendingIntent
@@ -151,7 +136,7 @@ class MainActivity : AppCompatActivity() {
                 .build()
 
         return transitions
-    }
+    }*/
 
     private fun setupUI() {
         fabButtonHandler()
@@ -234,22 +219,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onPause() {
-        game.saveAll()
-        super.onPause()
-        map.onPause()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        map.onResume()
-        //game.showSavedMapData()
-        //populateGameGoals()
-    }
-
-
-
-    private fun populateGameGoals() {
+    private fun populateGameGoals() { // Populates goals from KMLDocument into goals of game class, if starting application for example
         val myGoals = kmlDocument.mKmlRoot.mItems
         if (myGoals != null) {
             //Log.d(tag, "Populating goals in game class")
@@ -261,6 +231,17 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onPause() {
+        game.saveAll()
+        super.onPause()
+        map.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        map.onResume()
     }
 
     companion object {

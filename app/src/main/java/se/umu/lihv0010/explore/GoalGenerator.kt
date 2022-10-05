@@ -24,12 +24,8 @@ class GoalGenerator(mapInput: MapView) {
     fun new(distanceAway: Double): Marker {
         val newGoal = Marker(map)
 
-        // TODO: Check if new marker is within 300m, if it is, generate a new one til we get there
-        // TODO: Also check so that the latest point isnt the same as one that has been done before, within x meters
-
-        // TODO: Fix icons and stylize
         val randomPoint = latestLocation.destinationPoint(distanceAway, randomDirection())
-        newGoal.position = getClosestRoadAndPath(randomPoint, distanceAway) // TODO: Find the 500m line on this path and pick that instead of full path
+        newGoal.position = getClosestRoadAndPath(randomPoint, distanceAway)
         newGoal.image = ContextCompat.getDrawable(map.context, android.R.drawable.ic_dialog_info)
         newGoal.title = "Current goal"
         newGoal.snippet = "This goal is worth $distanceAway points!"
@@ -83,7 +79,6 @@ class GoalGenerator(mapInput: MapView) {
         map.overlays.add(pathOverlay)
         MainActivity.Companion.kmlDocument.mKmlRoot.addOverlay(pathOverlay, MainActivity.kmlDocument)
 
-        // TODO: Zoom to new goal
         map.zoomToBoundingBox(pathOverlay.bounds, true)
         return pathOverlay.actualPoints.last() // Returns our new point, on a reachable road
     }
