@@ -43,7 +43,7 @@ class LocationServices(private val map: MapView, private val game: Game) {
 
             locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
-                    Log.d(tag, "on location result")
+                    //Log.d("LOCATION$tag", "on location result")
                     super.onLocationResult(locationResult)
                     locationResult.lastLocation?.let {
                         val result = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
@@ -57,7 +57,7 @@ class LocationServices(private val map: MapView, private val game: Game) {
                                 //game.addDistanceTravelled(latestLocation, newLocation)
                                 latestLocation = newLocation
                                 game.checkIfGoalReached(newLocation)
-                                Log.d(tag, "New location: $latestLocation")
+                                //Log.d("LOCATION$tag", "New location: $latestLocation")
                             }
                         }
                     }

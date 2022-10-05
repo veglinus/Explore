@@ -3,8 +3,11 @@ package se.umu.lihv0010.explore
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.PendingIntent
+import android.app.PendingIntent.getActivity
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.BitmapDrawable
@@ -17,10 +20,12 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import android.widget.NumberPicker
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.preference.PreferenceManager
@@ -46,11 +51,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var game: Game
     private lateinit var locationServices: LocationServices
 
-    // TODO: Setting home
-    // TODO: Menu for creating goal, also for cancelling
-
+    // TODO: Cancel goal (Maybe implement timer instead?)
     // TODO: Achievements
-    // TODO: Background activity (check if user was on foot all the time)
 
     // Cosmetic:
     // TODO: Custom icons for player
@@ -74,6 +76,8 @@ class MainActivity : AppCompatActivity() {
 
         setupMapAndGameLogic()
         setupUI()
+        game.showSavedMapData()
+        populateGameGoals()
     }
 
     private fun setupMapAndGameLogic() {
@@ -161,10 +165,38 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fabButtonHandler() {
-        binding.fab.setOnClickListener {
-            // TODO: Selector for distance
-            game.spawnGoal(500.0)
-            binding.fab.visibility = View.GONE
+        binding.fab.setOnClickListener { // Onclick FAB
+
+            val numberPicker = NumberPicker(this)
+            val options = arrayOf("100m", "500m", "750m", "1km", "2km", "3km", "4km", "5km", "10km")
+            numberPicker.displayedValues = options
+            numberPicker.minValue = 0;
+            numberPicker.maxValue = options.size - 1;
+
+            val alertDialog: AlertDialog? = this.let { // Dialogwindow
+                val builder = AlertDialog.Builder(it)
+                builder.apply {
+                    setMessage("Set goal length")
+                    builder.setView(numberPicker)
+                    setPositiveButton("Go!") { _, _ -> // User clicked OK button
+
+                        val userInput = options[numberPicker.value]
+                        var filteredInput: Double =
+                            userInput.filter { it -> it.isDigit() }.toDouble() // Filter out letters from string
+                        if (filteredInput < 99.0) { // Filtering for KM in string, if less than 100 then it's km.
+                            filteredInput *= 1000
+                        }
+
+                        Log.d(tag, "Input: $filteredInput")
+                        game.spawnGoal(filteredInput)
+                        binding.fab.visibility = View.GONE
+
+                    }
+                    setNegativeButton("Cancel") { dialog, id -> }
+                }
+                builder.create()
+            }
+            alertDialog?.show()
         }
 
         game.goalExists.observe(this, Observer {
@@ -211,9 +243,11 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         map.onResume()
-        game.showSavedMapData()
-        populateGameGoals()
+        //game.showSavedMapData()
+        //populateGameGoals()
     }
+
+
 
     private fun populateGameGoals() {
         val myGoals = kmlDocument.mKmlRoot.mItems

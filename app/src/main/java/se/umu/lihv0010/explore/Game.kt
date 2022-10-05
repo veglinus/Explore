@@ -26,9 +26,7 @@ class Game(inputMap: MapView) {
     var prefs: SharedPreferences = map.context.getSharedPreferences(
         "preferences", Context.MODE_PRIVATE
     )
-    private val gson = Gson()
 
-    private var homeLocation: GeoPoint
     var points: MutableLiveData<Int>
     var totalDistanceTravelled: Int
 
@@ -41,13 +39,6 @@ class Game(inputMap: MapView) {
     init {
         //clearData()
         Log.d(tag, "initiating game")
-
-        val homeLocationSaved = prefs.getString("homeLocation", null)
-        homeLocation = if (homeLocationSaved != null) {
-            gson.fromJson(homeLocationSaved, GeoPoint::class.java)
-        } else {
-            GeoPoint(57.86973548791104, 11.974444448918751) // TODO: Hardcoded atm
-        }
 
         points = MutableLiveData(prefs.getInt("points", 0))
         //goalExists = prefs.getBoolean("goalExists", false)
@@ -67,12 +58,12 @@ class Game(inputMap: MapView) {
 
     private fun clearData() {
         repeat(100) {
-            println("CLEARING ALL DATA IS ON!!!!!")
+            Log.d("CRITICAL_$tag","CLEARING ALL DATA IS ON!!!!!")
         }
         val clearDocument = KmlDocument()
         val localFile: File = clearDocument.getDefaultPathForAndroid(map.context, "my_data.kml")
         clearDocument.saveAsKML(localFile);
-        prefs.edit().clear().commit() // Debug: To force delete prefs
+        prefs.edit().clear().apply() // Debug: To force delete prefs
     }
 
     fun spawnGoal(distanceAway: Double) {
@@ -96,8 +87,6 @@ class Game(inputMap: MapView) {
             val localFile: File = Companion.kmlDocument.getDefaultPathForAndroid(map.context, "my_data.kml")
             Companion.kmlDocument.saveAsKML(localFile)
 
-            val homeLocationJson = gson.toJson(homeLocation)
-            prefs.edit().putString("homeLocation", homeLocationJson).apply()
             prefs.edit().putInt("points", points.value!!).apply()
             //prefs.edit().putBoolean("goalExists", goalExists).apply()
             prefs.edit().putInt("totalDistanceTravelled", totalDistanceTravelled).apply()
@@ -110,22 +99,22 @@ class Game(inputMap: MapView) {
     fun addDistanceTravelled(from: GeoPoint, to: GeoPoint) {
         val distance = from.distanceToAsDouble(to).toInt()
 
-        if (distance < 1000) {
+        if (distance < 100) {
             totalDistanceTravelled += distance
             Log.d(tag, "Distance travelled is now $totalDistanceTravelled")
         } else {
-            Log.d(tag, "User moved more than 1 km. Not adding to total.")
+            Log.d(tag, "User moved more than 100m. Not adding to total.")
         }
     }
 
     fun checkIfGoalReached(location: GeoPoint) {
-        //Log.d(tag, "Goals: $goals")
-        //Log.d(tag, "KML Overlays: " + Companion.kmlDocument.mKmlRoot.mItems.toString())
-        //Log.d(tag, "Map Overlays: " + map.overlays.toString())
+        Log.d(tag, "Goals: $goals")
+        Log.d(tag, "KML Overlays: " + Companion.kmlDocument.mKmlRoot.mItems.toString())
+        Log.d(tag, "Map Overlays: " + map.overlays.toString())
 
         for ((index, goal) in goals.withIndex()) {
             //Log.d(tag, "Loop: index: $index goal: $goal")
-            if (location.distanceToAsDouble(goal) < 100.0) {
+            if (location.distanceToAsDouble(goal) < 10.0) {
                 Toast.makeText(map.context, "Goal reached! Points have been added.", Toast.LENGTH_LONG).show()
 
                 addPoints(index) // TODO: Test if points are added correctly
