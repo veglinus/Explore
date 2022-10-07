@@ -36,33 +36,28 @@ class LocationServices(private val map: MapView, private val game: Game) {
         createMyLocationMarker()
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission") // We check for permissions in isLocationPermissionGranted
     private fun initLocationListener() {
         if (isLocationPermissionGranted()) {
             locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
-                    //Log.d("LOCATION$tag", "on location result")
                     super.onLocationResult(locationResult)
                     locationResult.lastLocation?.let {
                         val result = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
                         if (result != null) {
                             val newLocation = GeoPoint(result.latitude, result.longitude)
                             if (newLocation != latestLocation) {
-                                //game.addDistanceTravelled(latestLocation, newLocation)
                                 latestLocation = newLocation
                                 game.checkIfGoalReached(newLocation)
-                                //Log.d("LOCATION$tag", "New location: $latestLocation")
                             }
                         }
                     }
                 }
             }
             fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
-
         } else {
             Log.d(tag, "Location services not granted")
         }
-
     }
 
     private fun createMyLocationMarker() {
@@ -70,13 +65,11 @@ class LocationServices(private val map: MapView, private val game: Game) {
         myLocationOverlay = MyLocationNewOverlay(provider, map)
         myLocationOverlay.enableMyLocation()
         myLocationOverlay.enableFollowLocation()
-
-        //myLocationOverlay.setPersonIcon() // TODO: Set icon of player
         map.overlays.add(myLocationOverlay)
         map.invalidate()
     }
 
-    fun isLocationPermissionGranted(): Boolean {
+    private fun isLocationPermissionGranted(): Boolean {
         return if (ActivityCompat.checkSelfPermission(
                 map.context,
                 android.Manifest.permission.ACCESS_COARSE_LOCATION
@@ -89,8 +82,7 @@ class LocationServices(private val map: MapView, private val game: Game) {
                 map.context as Activity,
                 arrayOf(
                     android.Manifest.permission.ACCESS_FINE_LOCATION,
-                    android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                    android.Manifest.permission.ACTIVITY_RECOGNITION
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
                 ),
                 1
             )
@@ -101,6 +93,6 @@ class LocationServices(private val map: MapView, private val game: Game) {
     }
 
     companion object {
-        var latestLocation: GeoPoint = GeoPoint(57.86973548791104, 11.974444448918751)
+        var latestLocation: GeoPoint = GeoPoint(0.0, 0.0) // Used by all of app to see current coordinates
     }
 }

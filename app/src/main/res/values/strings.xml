@@ -6,4 +6,16 @@
     <string name="achievements">Achievements</string>
     <string name="new_goal">New goal</string>
     <string name="points">Points</string>
+    <string name="goal_reached">Goal reached! Points have been added.</string>
+
+    <string name="timer_started">Timer started! Reach the goal before the timer runs out!</string>
+    <string name="times_out">Time\'s out!</string>
+    <string name="times_out_long">Time\'s out! Only half points will be awarded.</string>
+
+    <string name="set_goal_length">Set goal length</string>
+    <string name="go">Go!</string>
+    <string name="cancel">Cancel</string>
+    <string name="center_map">Center map</string>
+    <string name="cancel_goal">Cancel goal</string>
+    <string name="goal_cancelled">Goal cancelled.</string>
 </resources>

@@ -11,7 +11,7 @@ task clean(type: Delete) {
 }
 
 allprojects {
-    // forces all changing dependencies (i.e. SNAPSHOTs) to automagicially download
+    // forces all changing dependencies (i.e. SNAPSHOTS) to automatically download
     configurations.all {
         resolutionStrategy {
             cacheChangingModulesFor 0, 'seconds'

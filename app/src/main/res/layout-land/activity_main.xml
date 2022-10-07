@@ -9,45 +9,71 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
+
+
     <TextView
-        android:id="@+id/points"
+        android:id="@+id/timer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/points"
+        android:text=""
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:textSize="30sp"
+
+        android:shadowColor="@color/primaryColor"
+        android:shadowDx="3"
+        android:shadowDy="3"
+        android:shadowRadius="3"
+
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/cancel_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/cancel_goal"
+        android:visibility="gone"
+        android:layout_marginBottom="16dp"
+
+        android:animateLayoutChanges="true"
+
+        app:layout_constraintBottom_toBottomOf="@+id/mapview"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/center_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:animateLayoutChanges="true"
+        android:contentDescription="@string/center_map"
+        android:src="@drawable/ic_menu_mylocation"
+
+        app:backgroundTint="@color/secondaryDarkColor"
+
+        app:layout_anchor="@id/fab"
+        app:layout_anchorGravity="top"
+
+        app:layout_constraintBottom_toTopOf="@+id/fab"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_gravity="end|bottom"
 
         android:src="@drawable/ic_flag_checkered"
         android:contentDescription="@string/new_goal"
         android:layout_margin="16dp"
         android:animateLayoutChanges="true" />
-
-    <ImageButton
-        android:id="@+id/center_button"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_gravity="end|bottom"
-        android:layout_margin="16dp"
-        android:padding="1dp"
-
-        android:src="@drawable/ic_menu_mylocation"
-        android:background="@color/design_default_color_secondary"
-        android:scaleType="fitXY"
-        android:visibility="invisible"
-
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-
-        android:animateLayoutChanges="true"
-        android:contentDescription="@string/center" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

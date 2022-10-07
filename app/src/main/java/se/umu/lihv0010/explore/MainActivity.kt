@@ -1,10 +1,10 @@
 package se.umu.lihv0010.explore
 
-import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.app.PendingIntent
 import android.content.Intent
+import android.content.res.Resources
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.util.Log
@@ -13,19 +13,17 @@ import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.widget.NumberPicker
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
-import com.google.android.gms.location.ActivityRecognition
-import com.google.android.gms.location.ActivityTransition
-import com.google.android.gms.location.ActivityTransitionRequest
-import com.google.android.gms.location.DetectedActivity
 import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import se.umu.lihv0010.explore.databinding.ActivityMainBinding
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -35,12 +33,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var game: Game
     private lateinit var locationServices: LocationServices
-
-    // TODO: Cancel goal (Maybe implement timer instead?)
-    // TODO: Achievements
-
-    // Cosmetic:
-    // TODO: App icon & change name
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         locationServices.myLocationOverlay.disableFollowLocation() // Stops following center marker
@@ -55,9 +47,9 @@ class MainActivity : AppCompatActivity() {
         val policy = ThreadPolicy.Builder().permitAll().build() // https://github.com/MKergall/osmbonuspack/wiki/Tutorial_0
         StrictMode.setThreadPolicy(policy) // https://stackoverflow.com/questions/21213224/roadmanager-for-osmdroid-error
         getInstance().userAgentValue = "ExploreApp/1.0"
-        //getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
-        setContentView(binding.root)
 
+        getResourcesForCompanionObject()
+        setContentView(binding.root)
         setupMapAndGameLogic()
         setupUI()
         game.showSavedMapData()
@@ -72,71 +64,7 @@ class MainActivity : AppCompatActivity() {
         map.controller.setZoom(18.0) // 18 should be standard
         game = Game(map)
         locationServices = LocationServices(map, game)
-        //initActivityListener()
     }
-
-    /*
-    // TODO: Section into separate file
-    // TODO: Deregister from updates: https://developer.android.com/guide/topics/location/transitions
-    private lateinit var myPendingIntent : PendingIntent
-    @SuppressLint("MissingPermission")
-    private fun initActivityListener() {
-
-        if (locationServices.isLocationPermissionGranted()) {
-            myPendingIntent = PendingIntent.getActivity(applicationContext,
-                0, intent, // TODO: idk what a request code is https://developer.android.com/guide/components/intents-filters#PendingIntent
-                /* flags */ PendingIntent.FLAG_IMMUTABLE)
-
-            val request = ActivityTransitionRequest(myTransitions())
-            // myPendingIntent is the instance of PendingIntent where the app receives callbacks.
-
-            ActivityRecognition.getClient(this)
-                .requestActivityTransitionUpdates(request, myPendingIntent)
-            Log.d(tag, "Listening for activities!")
-        }
-    }
-
-    private fun myTransitions(): MutableList<ActivityTransition> {
-        val transitions = mutableListOf<ActivityTransition>()
-
-        transitions +=
-            ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.WALKING)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
-                .build()
-
-        transitions +=
-            ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.WALKING)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
-                .build()
-
-        transitions +=
-            ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.RUNNING)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
-                .build()
-
-        transitions +=
-            ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.RUNNING)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
-                .build()
-
-        transitions +=
-            ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.ON_FOOT)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
-                .build()
-
-        transitions +=
-            ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.ON_FOOT)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
-                .build()
-
-        return transitions
-    }*/
 
     private fun setupUI() {
         fabButtonHandler()
@@ -144,9 +72,61 @@ class MainActivity : AppCompatActivity() {
             locationServices.myLocationOverlay.enableFollowLocation()
             binding.centerButton.visibility = View.GONE
         }
-        game.points.observe(this, Observer {
-            binding.points.text = it.toString()
+        binding.cancelButton.setOnClickListener {
+            game.cancelGoal()
+            binding.cancelButton.visibility = View.GONE
+            binding.timer.text = ""
+        }
+
+        game.endTimeStamp.observe(this, Observer {
+            handleTimer()
         })
+    }
+
+    private fun handleTimer() {
+        Log.d(tag, "HandleTimer called")
+        val currTime = System.currentTimeMillis()
+        val timerLength = game.endTimeStamp.value!! - currTime
+
+        if (currTime < game.endTimeStamp.value!!) { // If time isn't out yet
+            //Log.d(tag, "Time isnt out yet")
+
+            val timer = object: CountDownTimer(timerLength, 1000) {
+                override fun onTick(millisUntilFinished: Long) {
+                    if (game.goals.isEmpty()) {
+                        this.cancel()
+                        binding.timer.text = ""
+                    } else {
+                        // From stackoverflow, because I just wanted something pretty that works. https://stackoverflow.com/questions/625433/how-to-convert-milliseconds-to-x-mins-x-seconds-in-java
+                        val textOut = String.format("%02d:%02d",
+                            TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished),
+                            TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) -
+                                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished))
+                        )
+                        binding.timer.text = textOut
+                    }
+                }
+
+                override fun onFinish() {
+                    binding.timer.text = getString(R.string.times_out)
+                    val lastGoalScore = game.goalsWorthPoints.size - 1
+                    game.goalsWorthPoints[lastGoalScore] = game.goalsWorthPoints.last() / 2
+                    Toast.makeText(map.context, getString(R.string.times_out_long), Toast.LENGTH_LONG).show()
+                    game.saveAll()
+
+                    binding.cancelButton.visibility = View.VISIBLE
+                }
+            }
+            timer.start()
+        } else { // If time is out
+
+            if (game.goals.isNotEmpty()) {
+                binding.timer.text = getString(R.string.times_out)
+            } else {
+                binding.timer.text = ""
+            }
+
+        }
     }
 
     private fun fabButtonHandler() {
@@ -158,12 +138,12 @@ class MainActivity : AppCompatActivity() {
             numberPicker.minValue = 0;
             numberPicker.maxValue = options.size - 1;
 
-            val alertDialog: AlertDialog? = this.let { // Dialogwindow
+            val alertDialog: AlertDialog? = this.let {
                 val builder = AlertDialog.Builder(it)
                 builder.apply {
-                    setMessage("Set goal length")
+                    setMessage(getString(R.string.set_goal_length))
                     builder.setView(numberPicker)
-                    setPositiveButton("Go!") { _, _ -> // User clicked OK button
+                    setPositiveButton(getString(R.string.go)) { _, _ -> // User clicked OK button
 
                         val userInput = options[numberPicker.value]
                         var filteredInput: Double =
@@ -177,7 +157,7 @@ class MainActivity : AppCompatActivity() {
                         binding.fab.visibility = View.GONE
 
                     }
-                    setNegativeButton("Cancel") { dialog, id -> }
+                    setNegativeButton(getString(R.string.cancel)) { dialog, id -> }
                 }
                 builder.create()
             }
@@ -233,6 +213,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun getResourcesForCompanionObject() {
+        res = resources
+    }
+
     override fun onPause() {
         game.saveAll()
         super.onPause()
@@ -246,5 +230,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         var kmlDocument = KmlDocument()
+        lateinit var res: Resources
     }
 }

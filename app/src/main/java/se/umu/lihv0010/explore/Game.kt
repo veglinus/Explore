@@ -7,13 +7,9 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import org.osmdroid.bonuspack.kml.*
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.FolderOverlay
-import org.osmdroid.views.overlay.Marker
 import java.lang.Exception
 import se.umu.lihv0010.explore.MainActivity.Companion
 import java.io.File
@@ -23,11 +19,13 @@ class Game(inputMap: MapView) {
     private val tag = "DebugExploreGameClass"
     private val map = inputMap
 
-    var prefs: SharedPreferences = map.context.getSharedPreferences(
+    private var prefs: SharedPreferences = map.context.getSharedPreferences(
         "preferences", Context.MODE_PRIVATE
     )
 
     var points: MutableLiveData<Int>
+    var endTimeStamp: MutableLiveData<Long>
+
     var totalDistanceTravelled: Int
     var goals: MutableList<GeoPoint> = mutableListOf() // List of current goals
     var goalsWorthPoints: MutableList<Int> = mutableListOf() // List of what points goals are worth depending on index
@@ -41,6 +39,7 @@ class Game(inputMap: MapView) {
         // Loads saved data from prefs
         points = MutableLiveData(prefs.getInt("points", 0))
         totalDistanceTravelled = prefs.getInt("totalDistanceTravelled", 0)
+        endTimeStamp = MutableLiveData(prefs.getLong("endTimeStamp", 0L))
 
         val pointsString = prefs.getString("goalsWorthPoints", null)?.split(",")
         if (pointsString != null) {
@@ -62,11 +61,26 @@ class Game(inputMap: MapView) {
             map.overlays.add(newGoal) // Add the entire overlay
             goalExists.value = goals.isNotEmpty() // Set goalExists to true
             Companion.kmlDocument.mKmlRoot.addOverlay(newGoal, Companion.kmlDocument) // Add overlay to KMLDocument aswell
+            timeStamp(distanceAway)
+
             saveAll() // Save all data as a precaution
             map.invalidate() // Update map in view
+            Toast.makeText(map.context, MainActivity.res.getString(R.string.timer_started), Toast.LENGTH_LONG).show()
+
         } else {
          Log.d(tag, "Goal already exists.")
         }
+    }
+
+    private fun timeStamp(distance: Double) {
+        // This formula assumes it takes 72 seconds to walk 100m, or 720s/12 minutes to walk 1km.
+        val newDistance = ((distance * 0.72) * 1000).toLong() // Converted to milliseconds
+        val timeStamp = System.currentTimeMillis()
+
+        //startTimeStamp.value = timeStamp
+        endTimeStamp.value = timeStamp + newDistance
+
+        Log.d(tag, "Timestamps goal: ${endTimeStamp.value}")
     }
 
     fun saveAll() { // Saves all data used by application
@@ -74,21 +88,14 @@ class Game(inputMap: MapView) {
             val localFile: File = Companion.kmlDocument.getDefaultPathForAndroid(map.context, "my_data.kml")
             Companion.kmlDocument.saveAsKML(localFile)
             prefs.edit().putInt("points", points.value!!).apply()
+
+            //prefs.edit().putLong("startTimeStamp", startTimeStamp.value!!).apply()
+            prefs.edit().putLong("endTimeStamp", endTimeStamp.value!!).apply()
+
             prefs.edit().putInt("totalDistanceTravelled", totalDistanceTravelled).apply()
             prefs.edit().putString("goalsWorthPoints", goalsWorthPoints.joinToString(",")).apply()
         } catch (e: Exception) {
             throw e
-        }
-    }
-
-    fun addDistanceTravelled(from: GeoPoint, to: GeoPoint) {
-        val distance = from.distanceToAsDouble(to).toInt()
-
-        if (distance < 100) {
-            totalDistanceTravelled += distance
-            Log.d(tag, "Distance travelled is now $totalDistanceTravelled")
-        } else {
-            Log.d(tag, "User moved more than 100m. Not adding to total.")
         }
     }
 
@@ -99,23 +106,46 @@ class Game(inputMap: MapView) {
         //Log.d(tag, "Map Overlays: " + map.overlays.toString())
 
         for ((index, goal) in goals.withIndex()) { // For each goal (at the moment we only support one goal at a time)
-            //Log.d(tag, "Loop: index: $index goal: $goal")
-            if (location.distanceToAsDouble(goal) < 10.0) { // If within 10 meters of goal:
-                Toast.makeText(map.context, "Goal reached! Points have been added.", Toast.LENGTH_LONG).show()
-                addPoints(index) // Adds points
-                removeGoalAndPathFromOverlays(index) // Removes overlays and goal
-                goals.remove(goal) // Remove goal from goal list in Game
-                goalExists.value = goals.isNotEmpty() // Goal does not exist anymore
-
-                saveAll() // Save everything
-
-                if (map.overlays.size >= 2) { // Handle the map overlays currently in view (dirty workaround)
-                    map.overlays.removeAt(1)
-                    Companion.kmlDocument = KmlDocument()
-                    showSavedMapData()
-                }
-                map.invalidate() // Update map
+            if (location.distanceToAsDouble(goal) < 15.0) { // If within 10 meters of goal:
+                onGoalEnd(false)
             }
+        }
+    }
+
+    fun cancelGoal() {
+        onGoalEnd(true)
+    }
+
+
+    private fun onGoalEnd(cancelled: Boolean = false) {
+        for ((index, goal) in goals.withIndex()) {
+
+            if (!cancelled) { // If not cancelled, add points
+                addPoints(index) // Adds points
+                Toast.makeText(
+                    map.context,
+                    MainActivity.res.getString(R.string.goal_reached),
+                    Toast.LENGTH_LONG
+                ).show()
+            } else { // if cancelled:
+                Toast.makeText(
+                    map.context,
+                    MainActivity.res.getString(R.string.goal_cancelled),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            removeGoalAndPathFromOverlays(index) // Removes overlays and goal
+            goals.remove(goal) // Remove goal from goal list in Game
+            goalExists.value = goals.isNotEmpty() // Goal does not exist anymore
+            saveAll() // Save everything
+
+            if (map.overlays.size >= 2) { // Handle the map overlays currently in view (dirty workaround)
+                map.overlays.removeAt(1)
+                Companion.kmlDocument = KmlDocument()
+                showSavedMapData()
+            }
+            map.invalidate() // Update map
         }
     }
 

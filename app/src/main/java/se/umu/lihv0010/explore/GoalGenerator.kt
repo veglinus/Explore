@@ -1,12 +1,9 @@
 package se.umu.lihv0010.explore
 
-import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.bonuspack.routing.RoadManager
-import org.osmdroid.bonuspack.routing.RoadNode
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
@@ -73,11 +70,9 @@ class GoalGenerator(mapInput: MapView) {
             }
         }
 
-        //Log.d(tag, "Distance: $distance")
         pathOverlay.usePath(true) // Uncomment to see first generated path which is as long as the distance variable
-
         map.overlays.add(pathOverlay)
-        MainActivity.Companion.kmlDocument.mKmlRoot.addOverlay(pathOverlay, MainActivity.kmlDocument)
+        MainActivity.kmlDocument.mKmlRoot.addOverlay(pathOverlay, MainActivity.kmlDocument)
 
         map.zoomToBoundingBox(pathOverlay.bounds, true)
         return pathOverlay.actualPoints.last() // Returns our new point, on a reachable road
@@ -88,8 +83,7 @@ class GoalGenerator(mapInput: MapView) {
         (roadManager as OSRMRoadManager).setMean(OSRMRoadManager.MEAN_BY_FOOT)
         val waypoints: ArrayList<GeoPoint> = arrayListOf(latestLocation, newGoal)
         val path = roadManager.getRoad(waypoints)
-        val pathOverlay: Polyline = RoadManager.buildRoadOverlay(path)
-        return pathOverlay
+        return RoadManager.buildRoadOverlay(path)
     }
 
 }

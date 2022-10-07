@@ -23,7 +23,7 @@ class AchievementsActivity : AppCompatActivity() {
 
     private class ListAdapter(context: Context): BaseAdapter() {
         private val mContext: Context
-        private val achievementList = Achievements.achievementList
+        private val achievementList = Achievements(context).achievementList
 
         init {
             mContext = context
