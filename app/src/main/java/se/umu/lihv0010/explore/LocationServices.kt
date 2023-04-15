@@ -4,6 +4,11 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Point
+import android.graphics.PorterDuff
 import android.location.LocationManager
 import android.os.Looper
 import android.util.Log
@@ -12,6 +17,7 @@ import com.google.android.gms.location.*
 import com.google.android.gms.location.LocationServices
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
@@ -49,6 +55,7 @@ class LocationServices(private val map: MapView, private val game: Game) {
                             if (newLocation != latestLocation) {
                                 latestLocation = newLocation
                                 game.checkIfGoalReached(newLocation)
+                                removeFog(newLocation)
                             }
                         }
                     }
@@ -58,6 +65,12 @@ class LocationServices(private val map: MapView, private val game: Game) {
         } else {
             Log.d(tag, "Location services not granted")
         }
+    }
+
+    private fun removeFog(newLocation: GeoPoint) {
+        Log.d(tag, "Add hole at new ")
+        game.fog.addHoleAt(newLocation)
+        map.invalidate()
     }
 
     private fun createMyLocationMarker() {

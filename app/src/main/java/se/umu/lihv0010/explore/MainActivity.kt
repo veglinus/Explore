@@ -1,8 +1,21 @@
 package se.umu.lihv0010.explore
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.res.Configuration
 import android.content.res.Resources
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Point
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.Rect
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.StrictMode
@@ -17,11 +30,17 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
+import com.google.android.gms.common.util.MapUtils
 import org.osmdroid.bonuspack.kml.KmlDocument
+import org.osmdroid.bonuspack.overlays.GroundOverlay
 import org.osmdroid.config.Configuration.getInstance
+import org.osmdroid.events.MapListener
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.FolderOverlay
+import org.osmdroid.views.overlay.Polygon
 import se.umu.lihv0010.explore.databinding.ActivityMainBinding
 import java.util.concurrent.TimeUnit
 
@@ -55,7 +74,7 @@ class MainActivity : AppCompatActivity() {
         game.showSavedMapData()
         populateGameGoals()
     }
-
+    @SuppressLint("ClickableViewAccessibility")
     private fun setupMapAndGameLogic() {
         Log.d(tag, "Setting up map!")
         map = binding.mapview
@@ -131,7 +150,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun fabButtonHandler() {
         binding.fab.setOnClickListener { // Onclick FAB
-
             val numberPicker = NumberPicker(this)
             val options = arrayOf("100m", "500m", "750m", "1km", "2km", "3km", "4km", "5km", "10km")
             numberPicker.displayedValues = options
@@ -218,12 +236,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
+        Log.d(tag, "onPause")
         game.saveAll()
         super.onPause()
         map.onPause()
     }
 
     override fun onResume() {
+        Log.d(tag, "onResume")
         super.onResume()
         map.onResume()
     }

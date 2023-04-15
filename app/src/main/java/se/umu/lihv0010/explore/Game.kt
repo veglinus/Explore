@@ -26,6 +26,8 @@ class Game(inputMap: MapView) {
     var points: MutableLiveData<Int>
     var endTimeStamp: MutableLiveData<Long>
 
+    val fog: FogOverlay = FogOverlay()
+
     var totalDistanceTravelled: Int
     var goals: MutableList<GeoPoint> = mutableListOf() // List of current goals
     var goalsWorthPoints: MutableList<Int> = mutableListOf() // List of what points goals are worth depending on index
@@ -33,7 +35,7 @@ class Game(inputMap: MapView) {
     private val goalGenerator = GoalGenerator(map)
 
     init {
-        //clearData()
+        clearData()
         Log.d(tag, "initiating game")
 
         // Loads saved data from prefs
@@ -160,6 +162,9 @@ class Game(inputMap: MapView) {
             Companion.kmlDocument
         ) // Overlay for icons and path
         map.overlays.add(kmlOverlay)
+        map.invalidate()
+
+        map.overlays.add(fog)
         map.invalidate()
     }
 
