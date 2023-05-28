@@ -25,12 +25,18 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 class LocationServices(private val map: MapView, private val game: Game) {
     private val tag = "DebugExploreLocationManagerClass"
 
-    private val locationRequest = LocationRequest.create().apply {
-        interval = 60
+
+    private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000).apply {
+        //setMinUpdateDistanceMeters(minimalDistance)
+        setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
+        setWaitForAccurateLocation(true)
+    }.build()
+    /*
+            interval = 60
         fastestInterval = 30
         maxWaitTime = 2
         priority = Priority.PRIORITY_HIGH_ACCURACY
-    }
+     */
 
     var locationManager: LocationManager = map.context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private var fusedLocationProviderClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(map.context)
@@ -51,12 +57,19 @@ class LocationServices(private val map: MapView, private val game: Game) {
                     locationResult.lastLocation?.let {
                         val result = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
                         if (result != null) {
+                            //Log.d(tag, "Result is not null")
                             val newLocation = GeoPoint(result.latitude, result.longitude)
                             if (newLocation != latestLocation) {
+                                //Log.d(tag, "New location is not last location. Checking for goal.")
                                 latestLocation = newLocation
                                 game.checkIfGoalReached(newLocation)
-                                removeFog(newLocation)
+
+                                game.myOverlays.fog.addHoleAt(newLocation)
+                            } else {
+                                //Log.d(tag, "New location was last location.")
                             }
+                        } else {
+                            //Log.d(tag, "Result was null")
                         }
                     }
                 }
@@ -65,12 +78,6 @@ class LocationServices(private val map: MapView, private val game: Game) {
         } else {
             Log.d(tag, "Location services not granted")
         }
-    }
-
-    private fun removeFog(newLocation: GeoPoint) {
-        Log.d(tag, "Add hole at new ")
-        game.fog.addHoleAt(newLocation)
-        map.invalidate()
     }
 
     private fun createMyLocationMarker() {

@@ -42,6 +42,7 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.Polygon
 import se.umu.lihv0010.explore.databinding.ActivityMainBinding
+import kotlin.random.Random
 import java.util.concurrent.TimeUnit
 
 
@@ -71,7 +72,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setupMapAndGameLogic()
         setupUI()
-        game.showSavedMapData()
+        game.myOverlays.showSavedMapData()
+        game.myOverlays.showFog()
         populateGameGoals()
     }
     @SuppressLint("ClickableViewAccessibility")
@@ -128,8 +130,7 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onFinish() {
                     binding.timer.text = getString(R.string.times_out)
-                    val lastGoalScore = game.goalsWorthPoints.size - 1
-                    game.goalsWorthPoints[lastGoalScore] = game.goalsWorthPoints.last() / 2
+                    val lastGoalScore = game.goals.first().halfWorth()
                     Toast.makeText(map.context, getString(R.string.times_out_long), Toast.LENGTH_LONG).show()
                     game.saveAll()
 
@@ -222,10 +223,19 @@ class MainActivity : AppCompatActivity() {
         if (myGoals != null) {
             //Log.d(tag, "Populating goals in game class")
             for (goal in myGoals) {
+                Log.d(tag, "Populating game goals with: $goal")
                 if (goal.javaClass.name == "org.osmdroid.bonuspack.kml.KmlPlacemark" && goal.mName != null) {
                     val goalPoint: GeoPoint = GeoPoint(goal.boundingBox.centerLatitude, goal.boundingBox.centerLongitude)
-                    game.goals.add(goalPoint)
-                    game.goalExists.value = game.goals.isNotEmpty()
+                    /// TODO: This is currently broken, fix
+
+                    TODO("Goal is not being added to goals list. We need to work around the goal list")
+
+                    // Possible solution could be to cast the KMLFeatures to Goal object and Polyline
+
+                    //val castedGoal = Goal(map, goal.)
+
+                    //game.goals.add(goal)
+                    //game.goalExists.value = game.goals.isNotEmpty()
                 }
             }
         }
@@ -251,5 +261,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         var kmlDocument = KmlDocument()
         lateinit var res: Resources
+        var latestGoalDirection = Random(System.currentTimeMillis()).nextDouble(0.0, 360.0) // Latest direction(0-360) of new goal
+
     }
 }

@@ -13,26 +13,12 @@ import kotlin.random.Random
 
 class GoalGenerator(mapInput: MapView) {
     private val tag = "DebugExploreGoalGenerator"
-    val map = mapInput
+    private val map = mapInput
 
     private val random = Random(System.currentTimeMillis())
     private var latestGoalDirection = random.nextDouble(0.0, 360.0) // Latest direction(0-360) of new goal
 
-    fun new(distanceAway: Double): Marker {
-        val newGoal = Marker(map)
-
-        val randomPoint = latestLocation.destinationPoint(distanceAway, randomDirection())
-        newGoal.position = getClosestRoadAndPath(randomPoint, distanceAway)
-        newGoal.image = ContextCompat.getDrawable(map.context, android.R.drawable.ic_dialog_info)
-        newGoal.title = "Current goal"
-        newGoal.snippet = "This goal is worth $distanceAway points!"
-        newGoal.subDescription = "$distanceAway meters away"
-        newGoal.icon = ContextCompat.getDrawable(map.context, R.drawable.ic_flag_checkered)
-
-        return newGoal
-    }
-
-    private fun randomDirection(): Double {
+    fun randomDirection(): Double {
         val rnd2 = random.nextBoolean()
         var newDirection = latestGoalDirection
 
@@ -55,7 +41,7 @@ class GoalGenerator(mapInput: MapView) {
         return newDirection
     }
 
-    private fun getClosestRoadAndPath(newGoal: GeoPoint, selectedDistance: Double): GeoPoint {
+    fun getClosestRoadAndPath(newGoal: GeoPoint, selectedDistance: Double): GeoPoint {
         // Creates path from start to finish
         val pathOverlay = getPath(newGoal)
 
@@ -71,10 +57,13 @@ class GoalGenerator(mapInput: MapView) {
         }
 
         pathOverlay.usePath(true) // Uncomment to see first generated path which is as long as the distance variable
-        map.overlays.add(pathOverlay)
-        MainActivity.kmlDocument.mKmlRoot.addOverlay(pathOverlay, MainActivity.kmlDocument)
+        map.overlays.add(pathOverlay)  // TODO: Implement overlay as custom class
 
+
+        MainActivity.kmlDocument.mKmlRoot.addOverlay(pathOverlay, MainActivity.kmlDocument)
         map.zoomToBoundingBox(pathOverlay.bounds, true)
+        map.controller.zoomOut()
+
         return pathOverlay.actualPoints.last() // Returns our new point, on a reachable road
     }
 
@@ -85,5 +74,4 @@ class GoalGenerator(mapInput: MapView) {
         val path = roadManager.getRoad(waypoints)
         return RoadManager.buildRoadOverlay(path)
     }
-
 }
