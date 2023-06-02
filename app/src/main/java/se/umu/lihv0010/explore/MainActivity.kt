@@ -225,17 +225,13 @@ class MainActivity : AppCompatActivity() {
             for (goal in myGoals) {
                 Log.d(tag, "Populating game goals with: $goal")
                 if (goal.javaClass.name == "org.osmdroid.bonuspack.kml.KmlPlacemark" && goal.mName != null) {
+
+                    Log.d(tag + "HERE", "Goal text: " + goal.mDescription)
                     val goalPoint: GeoPoint = GeoPoint(goal.boundingBox.centerLatitude, goal.boundingBox.centerLongitude)
-                    /// TODO: This is currently broken, fix
+                    val parsedGoal = Goal(map, 100.0, goalPoint)
 
-                    TODO("Goal is not being added to goals list. We need to work around the goal list")
-
-                    // Possible solution could be to cast the KMLFeatures to Goal object and Polyline
-
-                    //val castedGoal = Goal(map, goal.)
-
-                    //game.goals.add(goal)
-                    //game.goalExists.value = game.goals.isNotEmpty()
+                    game.goals.add(parsedGoal)
+                    game.goalExists.value = game.goals.isNotEmpty()
                 }
             }
         }

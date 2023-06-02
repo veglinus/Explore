@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData
 import org.osmdroid.bonuspack.kml.*
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.Polyline
 import java.lang.Exception
 import se.umu.lihv0010.explore.MainActivity.Companion
@@ -103,6 +104,9 @@ class Game(inputMap: MapView) {
         for (goal in goals) {
 
             if (!cancelled) { // If not cancelled, add points
+
+                Log.d(tag, "Goal not cancelled, give points")
+
                 addPoints(goal.worth) // Adds points
                 Toast.makeText(
                     map.context,
@@ -110,6 +114,9 @@ class Game(inputMap: MapView) {
                     Toast.LENGTH_LONG
                 ).show()
             } else { // if cancelled:
+
+                Log.d(tag, "Goal cancelled")
+
                 Toast.makeText(
                     map.context,
                     MainActivity.res.getString(R.string.goal_cancelled),
@@ -122,12 +129,15 @@ class Game(inputMap: MapView) {
             goalExists.value = false // Goal does not exist anymore
             saveAll() // Save everything
 
-            /*
-            if (map.overlays.size >= 2) { // Handle the map overlays currently in view (dirty workaround)
-                map.overlays.removeAt(1)
-                Companion.kmlDocument = KmlDocument()
-                showSavedMapData()
-            }*/
+            for (overlay in map.overlays) {
+                if (overlay is FolderOverlay) {
+                    map.overlays.remove(overlay)
+                }
+            }
+
+            Companion.kmlDocument = KmlDocument()
+            myOverlays.showSavedMapData()
+
         }
     }
 
