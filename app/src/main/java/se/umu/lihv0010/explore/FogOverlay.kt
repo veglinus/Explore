@@ -11,14 +11,17 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 
-
 class FogOverlay(val context: Context) : Overlay() {
-    private val FILE_NAME = "hole_points.txt"
+    private val saveFile = "hole_points.txt"
     private var tag = "DebugExploreFogOverlay"
-    private val holeGeoPoints: HashSet<GeoPoint> = hashSetOf()
+    private val holeGeoPoints: HashSet<GeoPoint> = hashSetOf(GeoPoint(0.0, 0.0))
 
     private var bitmap: Bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
     private var canvas: Canvas = Canvas(bitmap)
+
+    private val overlayPaint = Paint().apply {
+        xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
+    }
 
     init {
         loadHoles()
@@ -29,7 +32,7 @@ class FogOverlay(val context: Context) : Overlay() {
         if (!shadow) {
             // Create a transparent hole in the fog overlay at each specified GeoPoint
 
-            // Create a bitmap to draw the holes on
+            // Make bitmap & canvas blank before doing anything else
             bitmap = Bitmap.createBitmap(osmv?.width ?: 0, osmv?.height ?: 0, Bitmap.Config.ARGB_8888)
             canvas = Canvas(bitmap)
 
@@ -44,17 +47,14 @@ class FogOverlay(val context: Context) : Overlay() {
                     holePoint?.x?.toFloat() ?: 0f, holePoint?.y?.toFloat() ?: 0f,
                     holeRadiusPixels.toFloat(), Paint()
                 )
-
             }
 
-            // Draw the bitmap onto the canvas using PorterDuff.Mode.SRC_OUT
-            val overlayPaint = Paint().apply {
-                xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
-            }
+            // Draw the bitmap onto the canvas using PorterDuff.Mode.DST_IN
             c?.drawBitmap(bitmap, 0f, 0f, overlayPaint)
+            //colorFog(c, osmv)
 
-            // Recycle the bitmap
-            bitmap.recycle()
+
+            bitmap.recycle() // Recycle the bitmap
         }
     }
 
@@ -69,13 +69,13 @@ class FogOverlay(val context: Context) : Overlay() {
 
     fun saveHoles() {
         try {
-            val fileOutputStream = context.openFileOutput(FILE_NAME, Context.MODE_PRIVATE)
+            val fileOutputStream = context.openFileOutput(saveFile, Context.MODE_PRIVATE)
             val outputStreamWriter = OutputStreamWriter(fileOutputStream)
             for (geoPoint in holeGeoPoints) {
                 outputStreamWriter.write("${geoPoint.latitude},${geoPoint.longitude}\n")
             }
             outputStreamWriter.close()
-            Log.d(tag, "Holes saved successfully")
+            Log.d(tag, "Holes saved successfully! Amount of holes: " + holeGeoPoints.size)
         } catch (e: IOException) {
             Log.e(tag, "Error saving holes: ${e.message}")
         }
@@ -83,7 +83,7 @@ class FogOverlay(val context: Context) : Overlay() {
 
     fun loadHoles() {
         try {
-            val fileInputStream = context.openFileInput(FILE_NAME)
+            val fileInputStream = context.openFileInput(saveFile)
             val inputStreamReader = InputStreamReader(fileInputStream)
             val bufferedReader = BufferedReader(inputStreamReader)
             var line: String? = bufferedReader.readLine()
@@ -98,25 +98,24 @@ class FogOverlay(val context: Context) : Overlay() {
                 line = bufferedReader.readLine()
             }
             bufferedReader.close()
-            Log.d(tag, "Holes loaded successfully")
+            Log.d(tag, "Holes loaded successfully! Amount of holes: " + holeGeoPoints.size)
         } catch (e: IOException) {
             Log.e(tag, "Error loading holes: ${e.message}")
         }
     }
-}
 
-/*
-fun colorFog(c: Canvas?, osmv: MapView?) {
-    val fogPaint = Paint().apply {
-        color = Color.DKGRAY
-        style = Paint.Style.FILL
-        xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
+    fun colorFog(c: Canvas?, osmv: MapView?) {
+        val fogPaint = Paint().apply {
+            color = Color.DKGRAY
+            style = Paint.Style.FILL
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
+        }
+        c?.drawRect(
+            0f,
+            0f,
+            osmv?.width?.toFloat() ?: 0f,
+            osmv?.height?.toFloat() ?: 0f,
+            fogPaint
+        )
     }
-    c?.drawRect(
-        0f,
-        0f,
-        osmv?.width?.toFloat() ?: 0f,
-        osmv?.height?.toFloat() ?: 0f,
-        fogPaint
-    )
-}*/
+}

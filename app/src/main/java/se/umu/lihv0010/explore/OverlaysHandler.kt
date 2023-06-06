@@ -7,12 +7,23 @@ import org.osmdroid.bonuspack.kml.Style
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.Polyline
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.File
 
 
 class OverlaysHandler(private val map: MapView) {
     private val tag = "DebugExploreOverlaysHandlerClass"
     lateinit var fog: FogOverlay
+
+    private val provider = GpsMyLocationProvider(MainActivity.map.context)
+    val myLocationOverlay = MyLocationNewOverlay(provider, MainActivity.map)
+
+    fun setup() {
+        showSavedMapData()
+        showMyLocationMarker()
+        showFog()
+    }
 
     fun showSavedMapData() {
         Log.d(tag, "Parsing KMLdocument")
@@ -27,7 +38,15 @@ class OverlaysHandler(private val map: MapView) {
         map.overlays.add(kmlOverlay)
         map.invalidate()
     }
-    fun showFog() {
+
+    private fun showMyLocationMarker() {
+        myLocationOverlay.enableMyLocation()
+        myLocationOverlay.enableFollowLocation()
+        MainActivity.map.overlays.add(myLocationOverlay)
+        MainActivity.map.invalidate()
+    }
+
+    private fun showFog() {
         fog = FogOverlay(map.context)
         map.overlays.add(fog)
     }

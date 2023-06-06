@@ -1,8 +1,13 @@
 package se.umu.lihv0010.explore
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AlertDialog
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Bitmap
@@ -18,6 +23,7 @@ import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.IBinder
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.util.Log
@@ -29,6 +35,7 @@ import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import com.google.android.gms.common.util.MapUtils
 import org.osmdroid.bonuspack.kml.KmlDocument
@@ -47,15 +54,10 @@ import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var map : MapView
     private lateinit var binding: ActivityMainBinding
     private val tag = "DebugExplore"
 
-    private lateinit var game: Game
-    private lateinit var locationServices: LocationServices
-
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        locationServices.myLocationOverlay.disableFollowLocation() // Stops following center marker
         binding.centerButton.visibility = View.VISIBLE // Shows a center button
         return super.dispatchTouchEvent(event) // x and y are accessible from event if needed
     }
@@ -72,10 +74,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setupMapAndGameLogic()
         setupUI()
-        game.myOverlays.showSavedMapData()
-        game.myOverlays.showFog()
+        game.myOverlays.setup()
         populateGameGoals()
     }
+
     @SuppressLint("ClickableViewAccessibility")
     private fun setupMapAndGameLogic() {
         Log.d(tag, "Setting up map!")
@@ -84,13 +86,15 @@ class MainActivity : AppCompatActivity() {
         map.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
         map.controller.setZoom(18.0) // 18 should be standard
         game = Game(map)
-        locationServices = LocationServices(map, game)
+
+        val intent = Intent(this, LocationService::class.java)
+        startService(intent)
     }
 
     private fun setupUI() {
         fabButtonHandler()
         binding.centerButton.setOnClickListener {
-            locationServices.myLocationOverlay.enableFollowLocation()
+            game.myOverlays.myLocationOverlay.enableFollowLocation()
             binding.centerButton.visibility = View.GONE
         }
         binding.cancelButton.setOnClickListener {
@@ -142,6 +146,7 @@ class MainActivity : AppCompatActivity() {
 
             if (game.goals.isNotEmpty()) {
                 binding.timer.text = getString(R.string.times_out)
+                binding.cancelButton.visibility = View.VISIBLE
             } else {
                 binding.timer.text = ""
             }
@@ -237,6 +242,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun isLocationPermissionGranted(): Boolean {
+        return if (ActivityCompat.checkSelfPermission(
+                map.context,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                map.context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                map.context as Activity,
+                arrayOf(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
+                1
+            )
+            false
+        } else {
+            true
+        }
+    }
+
     private fun getResourcesForCompanionObject() {
         res = resources
     }
@@ -254,10 +282,17 @@ class MainActivity : AppCompatActivity() {
         map.onResume()
     }
 
+    override fun onDestroy() {
+        game.myOverlays.fog.saveHoles()
+        super.onDestroy()
+    }
+
     companion object {
         var kmlDocument = KmlDocument()
         lateinit var res: Resources
         var latestGoalDirection = Random(System.currentTimeMillis()).nextDouble(0.0, 360.0) // Latest direction(0-360) of new goal
 
+        lateinit var game: Game
+        lateinit var map: MapView
     }
 }

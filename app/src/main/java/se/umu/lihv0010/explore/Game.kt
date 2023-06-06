@@ -16,7 +16,6 @@ import java.lang.Exception
 import se.umu.lihv0010.explore.MainActivity.Companion
 import java.io.File
 
-
 class Game(inputMap: MapView) {
     private val tag = "DebugExploreGameClass"
     private val map = inputMap
@@ -86,7 +85,7 @@ class Game(inputMap: MapView) {
 
     fun checkIfGoalReached(location: GeoPoint) {
         // Checks if user has reached goal or not
-        debugLog()
+        //debugLog()
 
         for (goal in goals) { // For each goal (at the moment we only support one goal at a time)
             if (location.distanceToAsDouble(goal.position) < 15.0) { // If within 15 meters of goal:

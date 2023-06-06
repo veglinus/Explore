@@ -1,5 +1,6 @@
 package se.umu.lihv0010.explore
 
+import android.graphics.Color
 import android.util.Log
 import androidx.core.content.ContextCompat
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
@@ -8,7 +9,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
-import se.umu.lihv0010.explore.LocationServices.Companion.latestLocation
+import se.umu.lihv0010.explore.LocationService.Companion.latestLocation
 import kotlin.random.Random
 
 class GoalGenerator(mapInput: MapView) {
@@ -55,7 +56,7 @@ class GoalGenerator(mapInput: MapView) {
                 pathOverlay.actualPoints.remove(point)
             }
         }
-
+        pathOverlay.outlinePaint.color = Color.RED
         pathOverlay.usePath(true) // Uncomment to see first generated path which is as long as the distance variable
         map.overlays.add(pathOverlay)  // TODO: Implement overlay as custom class
 

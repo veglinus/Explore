@@ -5,6 +5,7 @@ import androidx.core.content.ContextCompat
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import se.umu.lihv0010.explore.LocationService.Companion.latestLocation
 import se.umu.lihv0010.explore.MainActivity.Companion.latestGoalDirection
 import kotlin.random.Random
 
@@ -18,7 +19,7 @@ class Goal(mapView: MapView,
 
     init {
         if (inputPosition == null) {
-            val randomPoint = LocationServices.latestLocation.destinationPoint(distanceAway, goalGenerator.randomDirection())
+            val randomPoint = latestLocation.destinationPoint(distanceAway, goalGenerator.randomDirection())
             this.position = goalGenerator.getClosestRoadAndPath(randomPoint, distanceAway)
         } else {
             this.position = inputPosition
