@@ -4,14 +4,15 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import org.osmdroid.bonuspack.kml.Style
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.Polyline
 import java.io.File
 
+
 class OverlaysHandler(private val map: MapView) {
     private val tag = "DebugExploreOverlaysHandlerClass"
-    val fog = FogOverlay()
+    lateinit var fog: FogOverlay
 
     fun showSavedMapData() {
         Log.d(tag, "Parsing KMLdocument")
@@ -27,8 +28,8 @@ class OverlaysHandler(private val map: MapView) {
         map.invalidate()
     }
     fun showFog() {
+        fog = FogOverlay(map.context)
         map.overlays.add(fog)
-        // TODO: Save and load
     }
 
     fun removeGoalAndPathFromOverlays() {

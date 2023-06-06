@@ -1,61 +1,60 @@
 package se.umu.lihv0010.explore
 
+import android.content.Context
 import android.graphics.*
+import android.util.Log
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 
-class FogOverlay : Overlay() {
 
-    private var holeGeoPoints: MutableList<GeoPoint> = mutableListOf()
+class FogOverlay(val context: Context) : Overlay() {
+    private val FILE_NAME = "hole_points.txt"
+    private var tag = "DebugExploreFogOverlay"
+    private val holeGeoPoints: HashSet<GeoPoint> = hashSetOf()
+
+    private var bitmap: Bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+    private var canvas: Canvas = Canvas(bitmap)
+
+    init {
+        loadHoles()
+    }
 
     override fun draw(c: Canvas?, osmv: MapView?, shadow: Boolean) {
         super.draw(c, osmv, shadow)
-
         if (!shadow) {
-            val fogPaint = Paint().apply {
-                color = Color.BLACK
-                style = Paint.Style.FILL
-                alpha = 125
-            }
-
-            // Draw the entire fog overlay
-            c?.drawRect(0f, 0f, osmv?.width?.toFloat() ?: 0f, osmv?.height?.toFloat() ?: 0f, fogPaint)
-
             // Create a transparent hole in the fog overlay at each specified GeoPoint
-            if (holeGeoPoints.isNotEmpty()) {
-                // Create a bitmap to draw the holes on
-                val bitmap = Bitmap.createBitmap(osmv?.width ?: 0, osmv?.height ?: 0, Bitmap.Config.ARGB_8888)
-                val canvas = Canvas(bitmap)
 
-                val holePaint = Paint().apply {
-                    color = Color.WHITE
-                    style = Paint.Style.FILL
-                    alpha = 255
-                }
+            // Create a bitmap to draw the holes on
+            bitmap = Bitmap.createBitmap(osmv?.width ?: 0, osmv?.height ?: 0, Bitmap.Config.ARGB_8888)
+            canvas = Canvas(bitmap)
 
-                // Draw each hole onto the bitmap
-                holeGeoPoints.forEach { geoPoint ->
-                    // Convert hole radius from meters to pixels
-                    val holeRadiusPixels = osmv?.projection?.metersToEquatorPixels(100f) ?: 0.0
+            // Draw existing holes into bitmap
+            val holeRadiusPixels = osmv?.projection?.metersToEquatorPixels(100f) ?: 0.0
 
-                    val holePoint = osmv?.projection?.toPixels(geoPoint, null)
-                    canvas.drawCircle(holePoint?.x?.toFloat() ?: 0f, holePoint?.y?.toFloat() ?: 0f,
-                        holeRadiusPixels.toFloat(), holePaint)
-                }
+            for (i in 0 until holeGeoPoints.size) {
+                val geoPoint = holeGeoPoints.elementAt(i)
+                val holePoint = osmv?.projection?.toPixels(geoPoint, null)
 
-                // Draw the bitmap onto the canvas using PorterDuff.Mode.SRC_OUT
-                val overlayPaint = Paint().apply {
-                    color = Color.WHITE
-                    style = Paint.Style.FILL
-                    alpha = 255
-                    xfermode = PorterDuffXfermode(PorterDuff.Mode.OVERLAY)
-                }
-                c?.drawBitmap(bitmap, 0f, 0f, overlayPaint)
+                canvas.drawCircle(
+                    holePoint?.x?.toFloat() ?: 0f, holePoint?.y?.toFloat() ?: 0f,
+                    holeRadiusPixels.toFloat(), Paint()
+                )
 
-                // Recycle the bitmap
-                bitmap.recycle()
             }
+
+            // Draw the bitmap onto the canvas using PorterDuff.Mode.SRC_OUT
+            val overlayPaint = Paint().apply {
+                xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
+            }
+            c?.drawBitmap(bitmap, 0f, 0f, overlayPaint)
+
+            // Recycle the bitmap
+            bitmap.recycle()
         }
     }
 
@@ -63,13 +62,61 @@ class FogOverlay : Overlay() {
         holeGeoPoints.add(geoPoint)
     }
 
-    fun removeHoleAt(index: Int) {
-        if (index in holeGeoPoints.indices) {
-            holeGeoPoints.removeAt(index)
+    override fun onPause() {
+        saveHoles()
+        super.onPause()
+    }
+
+    fun saveHoles() {
+        try {
+            val fileOutputStream = context.openFileOutput(FILE_NAME, Context.MODE_PRIVATE)
+            val outputStreamWriter = OutputStreamWriter(fileOutputStream)
+            for (geoPoint in holeGeoPoints) {
+                outputStreamWriter.write("${geoPoint.latitude},${geoPoint.longitude}\n")
+            }
+            outputStreamWriter.close()
+            Log.d(tag, "Holes saved successfully")
+        } catch (e: IOException) {
+            Log.e(tag, "Error saving holes: ${e.message}")
         }
     }
 
-    fun clearHoles() {
-        holeGeoPoints.clear()
+    fun loadHoles() {
+        try {
+            val fileInputStream = context.openFileInput(FILE_NAME)
+            val inputStreamReader = InputStreamReader(fileInputStream)
+            val bufferedReader = BufferedReader(inputStreamReader)
+            var line: String? = bufferedReader.readLine()
+            while (line != null) {
+                val parts = line.split(",")
+                if (parts.size == 2) {
+                    val latitude = parts[0].toDouble()
+                    val longitude = parts[1].toDouble()
+                    val geoPoint = GeoPoint(latitude, longitude)
+                    holeGeoPoints.add(geoPoint)
+                }
+                line = bufferedReader.readLine()
+            }
+            bufferedReader.close()
+            Log.d(tag, "Holes loaded successfully")
+        } catch (e: IOException) {
+            Log.e(tag, "Error loading holes: ${e.message}")
+        }
     }
 }
+
+/*
+fun colorFog(c: Canvas?, osmv: MapView?) {
+    val fogPaint = Paint().apply {
+        color = Color.DKGRAY
+        style = Paint.Style.FILL
+        xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
+    }
+    c?.drawRect(
+        0f,
+        0f,
+        osmv?.width?.toFloat() ?: 0f,
+        osmv?.height?.toFloat() ?: 0f,
+        fogPaint
+    )
+}*/

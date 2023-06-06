@@ -31,12 +31,6 @@ class LocationServices(private val map: MapView, private val game: Game) {
         setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
         setWaitForAccurateLocation(true)
     }.build()
-    /*
-            interval = 60
-        fastestInterval = 30
-        maxWaitTime = 2
-        priority = Priority.PRIORITY_HIGH_ACCURACY
-     */
 
     var locationManager: LocationManager = map.context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private var fusedLocationProviderClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(map.context)
