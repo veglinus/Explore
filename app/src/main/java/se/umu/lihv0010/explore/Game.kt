@@ -136,7 +136,11 @@ class Game(inputMap: MapView) {
         }
     }
 
-
+    fun addTravelledDistance(oldPoint: GeoPoint, newPoint: GeoPoint) {
+        val meters = oldPoint.distanceToAsDouble(newPoint)
+        totalDistanceTravelled += meters.toInt()
+        Log.d(tag, "Total distance travelled: $totalDistanceTravelled")
+    }
 
     private fun addPoints(worth: Int) { // Used for adding to points total
         points.value = points.value!! + worth

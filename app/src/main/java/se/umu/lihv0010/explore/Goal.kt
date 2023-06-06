@@ -10,7 +10,6 @@ class Goal(mapView: MapView,
            distanceAway: Double,
            inputPosition: GeoPoint? = null,
         ) : Marker(mapView) {
-    // TODO: Make it so we can initialize this class manually
     var worth = distanceAway.toInt()
     private val goalGenerator = GoalGenerator(mapView)
 

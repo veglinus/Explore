@@ -8,8 +8,8 @@ class Achievements(ctx: Context) {
         "preferences", Context.MODE_PRIVATE
     )
 
-    val achievementList = arrayListOf<Achievement>(
-        Achievement("Walker", "Travel 1km by walking to goals.", 1000, prefs.getInt("points", 0)),
-        Achievement("Runner", "Travel 10km by walking to goals.", 10000,  prefs.getInt("points", 0))
+    val achievementList = arrayListOf(
+        Achievement("Walker", "Travel 1km.", 1000, prefs.getInt("totalDistanceTravelled", 0)),
+        Achievement("Runner", "Travel 10km.", 10000,  prefs.getInt("totalDistanceTravelled", 0))
     )
 }

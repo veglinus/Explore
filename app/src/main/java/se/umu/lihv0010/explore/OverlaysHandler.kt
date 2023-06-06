@@ -19,9 +19,9 @@ class OverlaysHandler(private val map: MapView) {
     val myLocationOverlay = MyLocationNewOverlay(provider, MainActivity.map)
 
     fun setup() {
+        showFog()
         showSavedMapData()
         showMyLocationMarker()
-        showFog()
     }
 
     fun showSavedMapData() {

@@ -95,6 +95,7 @@ class LocationService : Service() {
     private val locationListener: LocationListener = LocationListener { location -> // Log the current location
         val newLocation = GeoPoint(location.latitude, location.longitude)
         if (newLocation != latestLocation) {
+            game.addTravelledDistance(latestLocation, newLocation)
             //Log.d(tag, "New location is not last location. Checking for goal.")
             latestLocation = newLocation
             game.checkIfGoalReached(newLocation)

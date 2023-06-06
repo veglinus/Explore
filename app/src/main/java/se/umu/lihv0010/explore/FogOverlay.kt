@@ -53,7 +53,6 @@ class FogOverlay(val context: Context) : Overlay() {
             c?.drawBitmap(bitmap, 0f, 0f, overlayPaint)
             //colorFog(c, osmv)
 
-
             bitmap.recycle() // Recycle the bitmap
         }
     }
