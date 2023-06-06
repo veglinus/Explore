@@ -4,15 +4,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import android.widget.Toast
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
-import org.osmdroid.bonuspack.kml.*
+import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.FolderOverlay
-import org.osmdroid.views.overlay.Polyline
-import java.lang.Exception
 import se.umu.lihv0010.explore.MainActivity.Companion
 import java.io.File
 
@@ -50,7 +46,7 @@ class Game(inputMap: MapView) {
             map.overlays.add(newGoal) // Add the entire overlay
 
             goalExists.value = true // Set goalExists to true
-            Companion.kmlDocument.mKmlRoot.addOverlay(newGoal, Companion.kmlDocument) // Add overlay to KMLDocument aswell
+            Companion.kmlDocument.mKmlRoot.addOverlay(newGoal, Companion.kmlDocument) // Add overlay to KMLDocument as well
             timeStamp(distanceAway)
 
             saveAll() // Save all data as a precaution

@@ -81,7 +81,7 @@ class FogOverlay(val context: Context) : Overlay() {
         }
     }
 
-    fun loadHoles() {
+    private fun loadHoles() {
         try {
             val fileInputStream = context.openFileInput(saveFile)
             val inputStreamReader = InputStreamReader(fileInputStream)

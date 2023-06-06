@@ -2,12 +2,10 @@ package se.umu.lihv0010.explore
 
 import android.graphics.Color
 import android.util.Log
-import androidx.core.content.ContextCompat
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import se.umu.lihv0010.explore.LocationService.Companion.latestLocation
 import kotlin.random.Random
@@ -46,13 +44,13 @@ class GoalGenerator(mapInput: MapView) {
         // Creates path from start to finish
         val pathOverlay = getPath(newGoal)
 
-        var distance: Double = 0.0
+        var distance = 0.0
         val duplicateList = pathOverlay.actualPoints.toMutableList()
         for ((index, point) in duplicateList.withIndex()) { // Populates distance variable
             if (index < duplicateList.size - 1) {
                 distance += point.distanceToAsDouble(duplicateList[index + 1])
             }
-            if (distance > selectedDistance) { // Removes rest of path if we dont need path to be longer
+            if (distance > selectedDistance) { // Removes rest of path if we don't need path to be longer
                 pathOverlay.actualPoints.remove(point)
             }
         }

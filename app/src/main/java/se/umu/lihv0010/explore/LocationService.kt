@@ -1,32 +1,20 @@
 package se.umu.lihv0010.explore
 
-import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
-import android.os.Binder
 import android.os.Build
-import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
-import com.google.android.gms.location.LocationServices
 import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import se.umu.lihv0010.explore.MainActivity.Companion.game
-import se.umu.lihv0010.explore.MainActivity.Companion.map
 
 class LocationService : Service() {
     private lateinit var locationManager: LocationManager
@@ -98,7 +86,7 @@ class LocationService : Service() {
         }
     }
 
-    fun stopLocationUpdates() {
+    private fun stopLocationUpdates() {
         // Remove location updates from the location manager
         locationManager.removeUpdates(locationListener)
         Log.d(TAG, "Location updates stopped")

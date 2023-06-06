@@ -1,13 +1,10 @@
 package se.umu.lihv0010.explore
 
-import android.util.Log
 import androidx.core.content.ContextCompat
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import se.umu.lihv0010.explore.LocationService.Companion.latestLocation
-import se.umu.lihv0010.explore.MainActivity.Companion.latestGoalDirection
-import kotlin.random.Random
 
 class Goal(mapView: MapView,
            distanceAway: Double,

@@ -3,27 +3,11 @@ package se.umu.lihv0010.explore
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.content.res.Resources
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.Point
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffXfermode
-import android.graphics.Rect
-import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.os.IBinder
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.util.Log
@@ -35,23 +19,13 @@ import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
-import com.google.android.gms.common.util.MapUtils
 import org.osmdroid.bonuspack.kml.KmlDocument
-import org.osmdroid.bonuspack.overlays.GroundOverlay
 import org.osmdroid.config.Configuration.getInstance
-import org.osmdroid.events.MapListener
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.FolderOverlay
-import org.osmdroid.views.overlay.Polygon
 import se.umu.lihv0010.explore.databinding.ActivityMainBinding
-import kotlin.random.Random
 import java.util.concurrent.TimeUnit
-
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -103,9 +77,9 @@ class MainActivity : AppCompatActivity() {
             binding.timer.text = ""
         }
 
-        game.endTimeStamp.observe(this, Observer {
+        game.endTimeStamp.observe(this) {
             handleTimer()
-        })
+        }
     }
 
     private fun handleTimer() {
@@ -114,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         val timerLength = game.endTimeStamp.value!! - currTime
 
         if (currTime < game.endTimeStamp.value!!) { // If time isn't out yet
-            //Log.d(tag, "Time isnt out yet")
+            //Log.d(tag, "Time isn't out yet")
 
             val timer = object: CountDownTimer(timerLength, 1000) {
                 override fun onTick(millisUntilFinished: Long) {
@@ -159,10 +133,10 @@ class MainActivity : AppCompatActivity() {
             val numberPicker = NumberPicker(this)
             val options = arrayOf("100m", "500m", "750m", "1km", "2km", "3km", "4km", "5km", "10km")
             numberPicker.displayedValues = options
-            numberPicker.minValue = 0;
-            numberPicker.maxValue = options.size - 1;
+            numberPicker.minValue = 0
+            numberPicker.maxValue = options.size - 1
 
-            val alertDialog: AlertDialog? = this.let {
+            val alertDialog: AlertDialog? = this.let { it ->
                 val builder = AlertDialog.Builder(it)
                 builder.apply {
                     setMessage(getString(R.string.set_goal_length))
@@ -171,7 +145,7 @@ class MainActivity : AppCompatActivity() {
 
                         val userInput = options[numberPicker.value]
                         var filteredInput: Double =
-                            userInput.filter { it -> it.isDigit() }.toDouble() // Filter out letters from string
+                            userInput.filter { it.isDigit() }.toDouble() // Filter out letters from string
                         if (filteredInput < 99.0) { // Filtering for KM in string, if less than 100 then it's km.
                             filteredInput *= 1000
                         }
@@ -181,21 +155,21 @@ class MainActivity : AppCompatActivity() {
                         binding.fab.visibility = View.GONE
 
                     }
-                    setNegativeButton(getString(R.string.cancel)) { dialog, id -> }
+                    setNegativeButton(getString(R.string.cancel)) { _, _ -> }
                 }
                 builder.create()
             }
             alertDialog?.show()
         }
 
-        game.goalExists.observe(this, Observer {
+        game.goalExists.observe(this) {
             if (it == true) {
                 //Log.d(tag, "Goal exists.")
                 binding.fab.visibility = View.GONE
             } else {
                 binding.fab.visibility = View.VISIBLE
             }
-        })
+        }
     }
 
     fun onAchievementClick(mi: MenuItem) {
@@ -232,7 +206,7 @@ class MainActivity : AppCompatActivity() {
                 if (goal.javaClass.name == "org.osmdroid.bonuspack.kml.KmlPlacemark" && goal.mName != null) {
 
                     Log.d(tag + "HERE", "Goal text: " + goal.mDescription)
-                    val goalPoint: GeoPoint = GeoPoint(goal.boundingBox.centerLatitude, goal.boundingBox.centerLongitude)
+                    val goalPoint = GeoPoint(goal.boundingBox.centerLatitude, goal.boundingBox.centerLongitude)
                     val parsedGoal = Goal(map, 100.0, goalPoint)
 
                     game.goals.add(parsedGoal)
@@ -290,7 +264,6 @@ class MainActivity : AppCompatActivity() {
     companion object {
         var kmlDocument = KmlDocument()
         lateinit var res: Resources
-        var latestGoalDirection = Random(System.currentTimeMillis()).nextDouble(0.0, 360.0) // Latest direction(0-360) of new goal
 
         lateinit var game: Game
         lateinit var map: MapView
