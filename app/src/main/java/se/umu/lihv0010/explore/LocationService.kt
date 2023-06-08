@@ -29,7 +29,6 @@ class LocationService : Service() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Start the service in the foreground
-        startForeground(notificationId, createNotification())
         // Start listening for location updates
         startLocationUpdates()
         // Return START_STICKY to indicate that the service should be restarted if it gets killed
@@ -45,30 +44,6 @@ class LocationService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createNotification(): Notification {
-        // Create a notification for the foreground service
-        // You can customize the notification as per your requirements
-        val notificationChannelId = "location_channel"
-        val notificationChannelName = "Location Updates"
-        val notificationChannel = NotificationChannel(
-            notificationChannelId,
-            notificationChannelName,
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-        val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.createNotificationChannel(notificationChannel)
-
-        val notificationBuilder = NotificationCompat.Builder(this, notificationChannelId)
-            .setContentTitle("Location Service")
-            .setContentText("Listening to location updates")
-            .setSmallIcon(R.drawable.ic_center_location)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
-
-        return notificationBuilder.build()
     }
 
     private fun startLocationUpdates() {

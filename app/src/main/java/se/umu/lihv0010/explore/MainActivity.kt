@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
+import android.provider.Settings
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -19,6 +20,7 @@ import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -26,10 +28,17 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import se.umu.lihv0010.explore.databinding.ActivityMainBinding
 import java.util.concurrent.TimeUnit
+import android.Manifest
+import android.app.NotificationManager
+import android.content.Context
+import android.content.DialogInterface
+import android.os.Build
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val tag = "DebugExplore"
+    private val locationPermissionRequestCode = 100
+    private val notificationPermissionRequestCode = 200
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         binding.centerButton.visibility = View.VISIBLE // Shows a center button
@@ -43,11 +52,21 @@ class MainActivity : AppCompatActivity() {
         val policy = ThreadPolicy.Builder().permitAll().build() // https://github.com/MKergall/osmbonuspack/wiki/Tutorial_0
         StrictMode.setThreadPolicy(policy) // https://stackoverflow.com/questions/21213224/roadmanager-for-osmdroid-error
         getInstance().userAgentValue = "ExploreApp/1.0"
-
         getResourcesForCompanionObject()
         setContentView(binding.root)
         setupMapAndGameLogic()
         setupUI()
+
+        // Check if location permission is granted
+        if (!isLocationPermissionGranted()) {
+            // Location permission has not been granted, request it
+            showLocationPermissionDialog()
+        } else {
+            startup()
+        }
+    }
+
+    fun startup() {
         game.myOverlays.setup()
         populateGameGoals()
     }
@@ -182,21 +201,6 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        val permissionsToRequest = ArrayList<String>()
-        var i = 0
-        while (i < grantResults.size) {
-            permissionsToRequest.add(permissions[i])
-            i++
-        }
-        if (permissionsToRequest.size > 0) {
-            ActivityCompat.requestPermissions(
-                this,
-                permissionsToRequest.toTypedArray(), 1)
-        }
-    }
-
     private fun populateGameGoals() { // Populates goals from KMLDocument into goals of game class, if starting application for example
         val myGoals = kmlDocument.mKmlRoot.mItems
         if (myGoals != null) {
@@ -217,28 +221,56 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isLocationPermissionGranted(): Boolean {
-        return if (ActivityCompat.checkSelfPermission(
-                map.context,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                map.context,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                map.context as Activity,
-                arrayOf(
-                    android.Manifest.permission.ACCESS_FINE_LOCATION,
-                    android.Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                1
-            )
-            false
-        } else {
-            true
-        }
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
+    private fun showLocationPermissionDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Location Permission")
+        builder.setMessage("This app requires location permission to function properly. Please allow location in background in your app settings to also be able to keep playing while the app is in the background.")
+        builder.setPositiveButton("Grant") { dialog: DialogInterface, _: Int ->
+            requestLocationPermission()
+            dialog.dismiss()
+        }
+        builder.setNegativeButton("Deny") { dialog: DialogInterface, _: Int ->
+            //dialog.dismiss()
+        }
+        builder.setCancelable(false)
+        builder.show()
+    }
+
+    private fun requestLocationPermission() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            locationPermissionRequestCode
+        )
+    }
+
+    // Handle the permission request results
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            locationPermissionRequestCode -> {
+                if (grantResults.isNotEmpty() &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED
+                ) {
+                    // Location permission granted
+                    startup()
+                } else {
+                    // Not granted, handle again
+                    showLocationPermissionDialog()
+                }
+            }
+        }
+    }
     private fun getResourcesForCompanionObject() {
         res = resources
     }
